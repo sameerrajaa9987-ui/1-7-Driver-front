@@ -19,6 +19,8 @@ import {
   useRemoveStudent,
   useStudentQr,
 } from "@modules/student/hooks/useStudents";
+import { useAttendanceSummary } from "@modules/attendance/hooks/useAttendance";
+import { useStudentPaymentSummary } from "@modules/payment/hooks/usePayments";
 import { useDrivers } from "@modules/driver/hooks/useDrivers";
 import { useVehicles } from "@modules/vehicle/hooks/useVehicles";
 import { useRoutes } from "@modules/route/hooks/useRoutes";
@@ -47,7 +49,6 @@ const STATUS_TONE = {
 
 function confirm(msg: string, onYes: () => void) {
   if (Platform.OS === "web") {
-     
     if (window.confirm(msg)) onYes();
   } else {
     Alert.alert("Please confirm", msg, [
@@ -86,6 +87,8 @@ export default function StudentDetailScreen() {
   const id = nav.params?.id as string;
   const { data: student } = useStudent(id);
   const { data: qr } = useStudentQr(id);
+  const { data: attendance } = useAttendanceSummary(id);
+  const { data: paySummary } = useStudentPaymentSummary(id);
   const removeMut = useRemoveStudent();
 
   const isAdmin = useAuthStore((s) => s.isAdmin);
@@ -116,7 +119,6 @@ export default function StudentDetailScreen() {
       subtitle={student?.mobile || ""}
       onBack={() => navigation.goBack()}
     >
-
       <Card style={{ marginBottom: 16 }}>
         <HStack gap={14} align="center">
           <Avatar name={student?.name || "?"} size={54} />
@@ -211,6 +213,63 @@ export default function StudentDetailScreen() {
           <InfoRow icon={RouteIcon} label="Route" value={routeName} />
           <InfoRow icon={UserCheck} label="Driver" value={driverName} />
           <InfoRow icon={Bus} label="Vehicle" value={vehicleNumber} />
+        </VStack>
+      </Card>
+
+      {/* Attendance rollup (spec §14) — from trip stops, incl. QR-verified. */}
+      <Card style={{ marginBottom: 16 }}>
+        <VStack gap={12}>
+          <Text variant="h4" tone="primary">
+            Attendance
+          </Text>
+          <HStack gap={12}>
+            <View style={{ flex: 1 }}>
+              <StatTile
+                label="Pickups"
+                value={String(attendance?.pickups ?? 0)}
+                tone="light"
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <StatTile
+                label="Drops"
+                value={String(attendance?.drops ?? 0)}
+                tone="light"
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <StatTile
+                label="Absences"
+                value={String(attendance?.absences ?? 0)}
+                tone={attendance?.absences ? "slate" : "light"}
+              />
+            </View>
+          </HStack>
+        </VStack>
+      </Card>
+
+      {/* Payment rollup (spec §14) — verified vs pending totals. */}
+      <Card style={{ marginBottom: 16 }}>
+        <VStack gap={12}>
+          <Text variant="h4" tone="primary">
+            Payments
+          </Text>
+          <HStack gap={12}>
+            <View style={{ flex: 1 }}>
+              <StatTile
+                label={`Paid · ${paySummary?.verifiedCount ?? 0} receipt${(paySummary?.verifiedCount ?? 0) === 1 ? "" : "s"}`}
+                value={money(paySummary?.paid ?? 0)}
+                tone="light"
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <StatTile
+                label={`Pending · ${paySummary?.pendingCount ?? 0}`}
+                value={money(paySummary?.pending ?? 0)}
+                tone={paySummary?.pending ? "teal" : "light"}
+              />
+            </View>
+          </HStack>
         </VStack>
       </Card>
 

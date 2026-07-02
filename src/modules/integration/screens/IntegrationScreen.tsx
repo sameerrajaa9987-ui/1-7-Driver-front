@@ -29,7 +29,6 @@ import {
 /** Cross-platform confirm (web window.confirm, native Alert). */
 function confirm(msg: string, onYes: () => void) {
   if (Platform.OS === "web") {
-     
     if (window.confirm(msg)) onYes();
   } else {
     const { Alert } = require("react-native");

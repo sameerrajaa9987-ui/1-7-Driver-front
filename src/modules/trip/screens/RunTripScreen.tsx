@@ -1,12 +1,21 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { View } from "react-native";
+import { Linking, Pressable, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { CheckCircle2, Flag, MapPin, School, UserX } from "lucide-react-native";
+import {
+  CheckCircle2,
+  Flag,
+  MapPin,
+  Phone,
+  School,
+  Timer,
+  UserX,
+} from "lucide-react-native";
 import { apiClient, apiErrorMessage } from "@api/apiClient";
 import { onSocket } from "@shared/api/socket";
 import LiveMap from "@shared/ui/MapView";
 import type { MapMarker } from "@shared/ui/map.types";
-import { palette } from "@shared/designSystem";
+import { palette, radius, tints } from "@shared/designSystem";
+import { useSettings } from "@modules/settings/hooks/useSettings";
 import {
   Screen,
   Text,
@@ -116,6 +125,10 @@ export default function RunTripScreen() {
 
   const isPickup = trip.type === "pickup";
   const sorted = trip.stops.slice().sort((a, b) => a.order - b.order);
+  // Parent contact per student — powers the per-stop "Call parent" action.
+  const phoneByStudent = new Map(
+    (students.data?.data ?? []).map((s) => [s.id, s.mobile || ""]),
+  );
   const allDone =
     sorted.length > 0 && sorted.every((s) => isStopDone(s.status));
   const isDone = trip.status === "completed";
@@ -150,6 +163,7 @@ export default function RunTripScreen() {
               trip={trip}
               stop={s}
               isPickup={isPickup}
+              parentMobile={phoneByStudent.get(s.studentId) || ""}
               onError={setError}
             />
           ))
@@ -179,11 +193,13 @@ function StopCard({
   trip,
   stop,
   isPickup,
+  parentMobile,
   onError,
 }: {
   trip: Trip;
   stop: TripStop;
   isPickup: boolean;
+  parentMobile: string;
   onError: (msg: string | null) => void;
 }) {
   const arrive = useArriveStop(trip.id);
@@ -230,7 +246,28 @@ function StopCard({
           <Text variant="label-lg" tone="primary" numberOfLines={1}>
             {stop.studentName || "Student"}
           </Text>
+          {stop.status === "arrived" && !done ? (
+            <WaitingTimer arrivedAt={stop.arrivedAt} />
+          ) : null}
         </VStack>
+        {parentMobile ? (
+          <Pressable
+            onPress={() => Linking.openURL(`tel:${parentMobile}`)}
+            hitSlop={8}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: radius.full,
+              backgroundColor: tints.green.bg,
+              borderWidth: 1,
+              borderColor: tints.green.ring,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Phone size={16} color={tints.green.icon} strokeWidth={2.2} />
+          </Pressable>
+        ) : null}
         <StatusChip label={meta.label} tone={meta.tone} />
       </HStack>
 
@@ -318,6 +355,48 @@ function StopCard({
   );
 }
 
+/**
+ * WaitingTimer — the spec §7 waiting window. Counts down from the org's
+ * configured waiting minutes after the van arrives; turns red when time is up
+ * so the driver knows a No-show is now fair.
+ */
+function WaitingTimer({ arrivedAt }: { arrivedAt: string | null }) {
+  const settings = useSettings();
+  const minutes = settings.data?.waitingTimerMinutes ?? 5;
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  if (!arrivedAt) return null;
+  const deadline = new Date(arrivedAt).getTime() + minutes * 60_000;
+  const remaining = Math.max(0, deadline - now);
+  const expired = remaining === 0;
+  const mm = Math.floor(remaining / 60_000);
+  const ss = Math.floor((remaining % 60_000) / 1000);
+
+  return (
+    <HStack gap={5} align="center">
+      <Timer
+        size={13}
+        color={expired ? tints.red.icon : tints.amber.icon}
+        strokeWidth={2.2}
+      />
+      <Text
+        variant="caption"
+        weight="600"
+        style={{ color: expired ? tints.red.fg : tints.amber.fg }}
+      >
+        {expired
+          ? "Waiting time over"
+          : `Waiting ${mm}:${String(ss).padStart(2, "0")}`}
+      </Text>
+    </HStack>
+  );
+}
+
 function FinishButton({
   trip,
   isPickup,
@@ -353,7 +432,7 @@ function FinishButton({
       disabled={!allDone}
       icon={
         isPickup ? (
-          <School size={17} color="#FFFFFF" strokeWidth={2.2} />
+          <School size={17} color={palette.ink[900]} strokeWidth={2.2} />
         ) : (
           <Flag size={17} color="#FFFFFF" strokeWidth={2.2} />
         )

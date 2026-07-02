@@ -24,7 +24,6 @@ import {
 
 function confirm(msg: string, onYes: () => void) {
   if (Platform.OS === "web") {
-     
     if (window.confirm(msg)) onYes();
   } else {
     Alert.alert("Please confirm", msg, [

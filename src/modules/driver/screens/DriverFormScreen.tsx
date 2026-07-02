@@ -1,14 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Platform, Alert } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import {
-  User,
-  Phone,
-  Lock,
-  IdCard,
-  MapPin,
-  Trash2,
-} from "lucide-react-native";
+import { User, Phone, Lock, IdCard, MapPin, Trash2 } from "lucide-react-native";
 import {
   useDriver,
   useCreateDriver,
@@ -19,18 +12,10 @@ import { apiErrorMessage } from "@api/apiClient";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { PERMISSIONS } from "@shared/permissions";
 import { palette, radius } from "@shared/designSystem";
-import {
-  Screen,
-  Text,
-  VStack,
-  Card,
-  Button,
-  TextField,
-} from "@shared/ui";
+import { Screen, Text, VStack, Card, Button, TextField } from "@shared/ui";
 
 function confirm(msg: string, onYes: () => void) {
   if (Platform.OS === "web") {
-     
     if (window.confirm(msg)) onYes();
   } else {
     Alert.alert("Please confirm", msg, [
@@ -102,7 +87,6 @@ export default function DriverFormScreen() {
       title={editing ? "Edit driver" : "Add driver"}
       onBack={() => navigation.goBack()}
     >
-
       {mut.isError && (
         <View style={errorBox}>
           <Text variant="body-sm" tone="danger">

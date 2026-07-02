@@ -123,11 +123,7 @@ export default function DriverTodayScreen() {
                 label="Start Pickup"
                 variant="accent"
                 icon={
-                  <Play
-                    size={16}
-                    color={palette.ink[900]}
-                    strokeWidth={2.4}
-                  />
+                  <Play size={16} color={palette.ink[900]} strokeWidth={2.4} />
                 }
                 loading={startTrip.isPending}
                 disabled={!routeId}

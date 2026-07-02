@@ -18,13 +18,7 @@ import {
 } from "lucide-react-native";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { useDashboardSummary } from "@modules/dashboard/hooks/useDashboard";
-import {
-  palette,
-  tints,
-  radius,
-  gradients,
-  glass,
-} from "@shared/designSystem";
+import { palette, tints, radius, gradients, glass } from "@shared/designSystem";
 import { useSectionNav } from "@navigation/AppNavigator";
 import {
   Screen,
@@ -131,10 +125,7 @@ export default function DashboardScreen() {
         >
           <HStack align="center" justify="space-between">
             <VStack gap={2} flex={1}>
-              <Text
-                variant="overline"
-                style={{ color: palette.brand[400] }}
-              >
+              <Text variant="overline" style={{ color: palette.brand[400] }}>
                 {greeting()}
               </Text>
               <Text variant="h1" style={{ color: "#FFFFFF" }}>
@@ -370,8 +361,16 @@ function HeroChip({
   onPress?: () => void;
 }) {
   return (
-    <Card onPress={onPress} padded={false} style={[styles.heroChip, glass.light]}>
-      <HStack gap={8} align="center" style={{ paddingHorizontal: 13, paddingVertical: 9 }}>
+    <Card
+      onPress={onPress}
+      padded={false}
+      style={[styles.heroChip, glass.light]}
+    >
+      <HStack
+        gap={8}
+        align="center"
+        style={{ paddingHorizontal: 13, paddingVertical: 9 }}
+      >
         <Icon size={15} color={palette.brand[300]} strokeWidth={2.2} />
         <Text variant="label" weight="600" style={{ color: "#FFFFFF" }}>
           {label}

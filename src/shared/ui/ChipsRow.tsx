@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   chipActive: {
-    backgroundColor: palette.teal[600],
-    borderColor: palette.teal[600],
+    backgroundColor: palette.ink[900],
+    borderColor: palette.ink[900],
   },
 });

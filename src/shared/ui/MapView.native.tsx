@@ -74,7 +74,8 @@ export default function LiveMap({
 }: MapViewProps) {
   const webRef = useRef<WebView>(null);
 
-  const focus = center ||
+  const focus =
+    center ||
     (markers[0]
       ? { lat: markers[0].lat, lng: markers[0].lng }
       : { lat: 12.9716, lng: 77.5946 });

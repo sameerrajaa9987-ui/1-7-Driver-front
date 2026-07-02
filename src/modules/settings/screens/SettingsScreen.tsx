@@ -169,9 +169,10 @@ export default function SettingsScreen() {
                 Notifications
               </Text>
               <ToggleRow
-                label="WhatsApp notifications"
+                label="WhatsApp notifications (coming soon)"
                 value={f.whatsappEnabled}
                 onValueChange={set("whatsappEnabled")}
+                disabled
               />
               <ToggleRow
                 label="Push notifications"
@@ -219,19 +220,27 @@ function ToggleRow({
   label,
   value,
   onValueChange,
+  disabled,
 }: {
   label: string;
   value: boolean;
   onValueChange: (v: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
-    <HStack gap={12} align="center" justify="space-between">
+    <HStack
+      gap={12}
+      align="center"
+      justify="space-between"
+      style={disabled ? { opacity: 0.5 } : undefined}
+    >
       <Text variant="body" tone="secondary" style={{ flex: 1 }}>
         {label}
       </Text>
       <Switch
         value={value}
         onValueChange={onValueChange}
+        disabled={disabled}
         trackColor={{ false: palette.neutral[300], true: palette.teal[400] }}
         thumbColor={value ? palette.teal[600] : palette.neutral[50]}
       />

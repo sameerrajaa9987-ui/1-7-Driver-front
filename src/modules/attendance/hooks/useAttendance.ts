@@ -1,6 +1,13 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { attendanceApi } from "@modules/attendance/api/attendanceApi";
 import { ScanPayload } from "@modules/attendance/types";
+
+export const useAttendanceSummary = (studentId: string) =>
+  useQuery({
+    queryKey: ["attendance-summary", studentId],
+    queryFn: () => attendanceApi.studentSummary(studentId),
+    enabled: !!studentId,
+  });
 
 export const useScanAttendance = () => {
   const qc = useQueryClient();

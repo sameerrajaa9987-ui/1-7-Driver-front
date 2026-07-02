@@ -176,10 +176,7 @@ export default function ParentTrackScreen() {
         >
           <HStack justify="space-between" align="flex-start">
             <VStack gap={6} flex={1}>
-              <Text
-                variant="overline"
-                style={{ color: palette.brand[400] }}
-              >
+              <Text variant="overline" style={{ color: palette.brand[400] }}>
                 {myStop.studentName}
               </Text>
               <Text variant="display-sm" style={{ color: "#FFFFFF" }}>

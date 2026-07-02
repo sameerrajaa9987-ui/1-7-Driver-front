@@ -6,22 +6,9 @@
 import React from "react";
 import { View, Pressable, StyleSheet } from "react-native";
 import { LogOut, ChevronRight } from "lucide-react-native";
-import {
-  palette,
-  radius,
-  tints,
-  gradients,
-  glass,
-} from "@shared/designSystem";
+import { palette, radius, tints, gradients, glass } from "@shared/designSystem";
 import { LinearGradient } from "expo-linear-gradient";
-import {
-  Screen,
-  Text,
-  VStack,
-  HStack,
-  Card,
-  Avatar,
-} from "@shared/ui";
+import { Screen, Text, VStack, HStack, Card, Avatar } from "@shared/ui";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { ROLE_LABELS } from "@shared/permissions";
 import { useLogout } from "@modules/auth/hooks/useAuth";

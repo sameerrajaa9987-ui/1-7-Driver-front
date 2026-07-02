@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react-native";
 import {
   LayoutDashboard,
   GraduationCap,
+  History,
   UserCog,
   Bus,
   Route as RouteIcon,
@@ -49,6 +50,7 @@ import SosScreen from "@modules/sos/screens/SosScreen";
 import DriverSosScreen from "@modules/sos/screens/DriverSosScreen";
 
 // Phase 3
+import ActivityLogScreen from "@modules/activity-log/screens/ActivityLogScreen";
 import MaintenanceScreen from "@modules/maintenance/screens/MaintenanceScreen";
 import BehaviourScreen from "@modules/telematics/screens/BehaviourScreen";
 import BranchesScreen from "@modules/branch/screens/BranchesScreen";
@@ -175,6 +177,13 @@ const ADMIN: NavItem[] = [
     icon: Plug,
     component: IntegrationScreen,
     tint: "neutral",
+  },
+  {
+    name: "ActivityLog",
+    label: "Activity Log",
+    icon: History,
+    component: ActivityLogScreen,
+    tint: "violet",
   },
   {
     name: "Notifications",

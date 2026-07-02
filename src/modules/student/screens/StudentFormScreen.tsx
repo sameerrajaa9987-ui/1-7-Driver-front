@@ -1,13 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import {
-  User,
-  Phone,
-  School,
-  MapPin,
-  Users,
-} from "lucide-react-native";
+import { User, Phone, School, MapPin, Users } from "lucide-react-native";
 import {
   useStudent,
   useCreateStudent,
@@ -116,7 +110,6 @@ export default function StudentFormScreen() {
       title={editing ? "Edit student" : "Add student"}
       onBack={() => navigation.goBack()}
     >
-
       {mut.isError && (
         <View style={errorBox}>
           <Text variant="body-sm" tone="danger">

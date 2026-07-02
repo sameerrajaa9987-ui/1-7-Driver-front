@@ -82,7 +82,6 @@ export default function StudentApproveScreen() {
       title="Approve & assign"
       onBack={() => navigation.goBack()}
     >
-
       <Text variant="body-sm" tone="tertiary" style={{ marginBottom: 16 }}>
         Assign transport for {student?.name || "this student"} and set the fee.
       </Text>

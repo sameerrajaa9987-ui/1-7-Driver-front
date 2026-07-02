@@ -16,6 +16,7 @@ import { LayoutGrid } from "lucide-react-native";
 import type { LucideIcon } from "lucide-react-native";
 import { palette, radius, shadows, motion } from "@shared/designSystem";
 import { Text } from "@shared/ui";
+import { useUnreadCount } from "@modules/notification/hooks/useNotifications";
 import type { NavItem } from "./navItems";
 
 export const MENU_ROUTE = "__menu__";
@@ -28,6 +29,11 @@ interface Props {
 
 export function TabDock({ items, active, onNavigate }: Props) {
   const insets = useSafeAreaInsets();
+  const unread = useUnreadCount();
+  const hasUnread = (unread.data ?? 0) > 0;
+  // The dot sits on the Alerts tab when it's in the dock, else on Menu.
+  const alertsInDock = items.some((i) => i.name === "Notifications");
+
   return (
     <View
       pointerEvents="box-none"
@@ -40,6 +46,7 @@ export function TabDock({ items, active, onNavigate }: Props) {
             icon={item.icon}
             label={item.label}
             active={active === item.name}
+            badge={hasUnread && item.name === "Notifications"}
             onPress={() => onNavigate(item.name)}
           />
         ))}
@@ -47,6 +54,7 @@ export function TabDock({ items, active, onNavigate }: Props) {
           icon={LayoutGrid}
           label="Menu"
           active={active === MENU_ROUTE}
+          badge={hasUnread && !alertsInDock}
           onPress={() => onNavigate(MENU_ROUTE)}
         />
       </View>
@@ -58,11 +66,13 @@ function DockTab({
   icon: Icon,
   label,
   active,
+  badge,
   onPress,
 }: {
   icon: LucideIcon;
   label: string;
   active: boolean;
+  badge?: boolean;
   onPress: () => void;
 }) {
   const scale = useSharedValue(1);
@@ -78,11 +88,14 @@ function DockTab({
         onPressOut={() => scale.set(withSpring(1, motion.spring.gentle))}
         style={[styles.tab, active && styles.tabActive]}
       >
-        <Icon
-          size={21}
-          color={active ? palette.brand[400] : "rgba(255,255,255,0.62)"}
-          strokeWidth={active ? 2.4 : 2}
-        />
+        <View>
+          <Icon
+            size={21}
+            color={active ? palette.brand[400] : "rgba(255,255,255,0.62)"}
+            strokeWidth={active ? 2.4 : 2}
+          />
+          {badge ? <View style={styles.badge} /> : null}
+        </View>
         <Text
           variant="label-sm"
           weight={active ? "700" : "500"}
@@ -129,5 +142,16 @@ const styles = StyleSheet.create({
   },
   tabActive: {
     backgroundColor: "rgba(240,167,10,0.14)",
+  },
+  badge: {
+    position: "absolute",
+    top: -2,
+    right: -4,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: palette.brand[500],
+    borderWidth: 1.5,
+    borderColor: palette.surface.dark,
   },
 });

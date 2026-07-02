@@ -1,12 +1,19 @@
 import React, { useState } from "react";
 import { View, TextInput, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Search, Plus, IdCard, Phone, ChevronRight } from "lucide-react-native";
+import {
+  Search,
+  Plus,
+  IdCard,
+  Phone,
+  ChevronRight,
+  AlertTriangle,
+} from "lucide-react-native";
 import { useDrivers } from "@modules/driver/hooks/useDrivers";
 import { Driver } from "@modules/driver/types";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { PERMISSIONS } from "@shared/permissions";
-import { palette, radius, outline } from "@shared/designSystem";
+import { palette, radius, outline, tints } from "@shared/designSystem";
 import {
   Screen,
   Text,
@@ -28,6 +35,12 @@ export default function DriversScreen() {
     search.trim() ? { search: search.trim() } : undefined,
   );
   const drivers = data?.data ?? [];
+
+  // Licence-expiry alerts (spec §12) — expired or expiring within 30 days.
+  const expiring = drivers.filter((d) => {
+    const days = licenseDaysLeft(d);
+    return days !== null && days <= 30;
+  });
 
   return (
     <Screen
@@ -60,6 +73,41 @@ export default function DriversScreen() {
         />
       </View>
 
+      {expiring.length > 0 ? (
+        <Card
+          style={{
+            marginTop: 16,
+            backgroundColor: tints.amber.bg,
+            borderColor: tints.amber.ring,
+          }}
+        >
+          <HStack gap={12} align="center">
+            <AlertTriangle
+              size={20}
+              color={tints.amber.icon}
+              strokeWidth={2.2}
+            />
+            <VStack gap={2} flex={1}>
+              <Text
+                variant="label"
+                weight="700"
+                style={{ color: tints.amber.fg }}
+              >
+                Licence check needed
+              </Text>
+              <Text variant="body-sm" style={{ color: tints.amber.fg }}>
+                {expiring
+                  .map((d) => {
+                    const days = licenseDaysLeft(d) ?? 0;
+                    return `${d.fullName} — ${days < 0 ? "expired" : `${days}d left`}`;
+                  })
+                  .join(" · ")}
+              </Text>
+            </VStack>
+          </HStack>
+        </Card>
+      ) : null}
+
       {drivers.length === 0 ? (
         <EmptyState
           icon={IdCard}
@@ -81,6 +129,13 @@ export default function DriversScreen() {
   );
 }
 
+/** Days until the licence expires (negative = expired), or null if unset. */
+function licenseDaysLeft(driver: Driver): number | null {
+  if (!driver.licenseExpiry) return null;
+  const ms = new Date(driver.licenseExpiry).getTime() - Date.now();
+  return Math.floor(ms / 86_400_000);
+}
+
 function DriverRow({
   driver,
   onPress,
@@ -88,6 +143,22 @@ function DriverRow({
   driver: Driver;
   onPress: () => void;
 }) {
+  const days = licenseDaysLeft(driver);
+  const dlTone =
+    days !== null && days < 0
+      ? ("danger" as const)
+      : days !== null && days <= 30
+        ? ("warning" as const)
+        : ("neutral" as const);
+  const dlLabel =
+    days !== null && days < 0
+      ? `DL expired`
+      : days !== null && days <= 30
+        ? `DL expires in ${days}d`
+        : driver.licenseNumber
+          ? `DL ${driver.licenseNumber}`
+          : "";
+
   return (
     <Card onPress={onPress} elevation="base">
       <HStack gap={14} align="center">
@@ -114,9 +185,7 @@ function DriverRow({
               </Text>
             )}
           </HStack>
-          {driver.licenseNumber ? (
-            <StatusChip label={`DL ${driver.licenseNumber}`} tone="neutral" />
-          ) : null}
+          {dlLabel ? <StatusChip label={dlLabel} tone={dlTone} /> : null}
         </VStack>
         {!driver.isActive ? (
           <StatusChip label="Inactive" tone="danger" />

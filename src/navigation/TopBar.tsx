@@ -65,7 +65,9 @@ export function TopBar({ items, active, onNavigate }: Props) {
                   variant="label"
                   weight={isActive ? "700" : "500"}
                   style={{
-                    color: isActive ? palette.ink[900] : "rgba(255,255,255,0.72)",
+                    color: isActive
+                      ? palette.ink[900]
+                      : "rgba(255,255,255,0.72)",
                   }}
                 >
                   {item.label}

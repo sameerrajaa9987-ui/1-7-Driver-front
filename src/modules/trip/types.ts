@@ -106,4 +106,5 @@ export interface StudentLite {
   pickupPoint: LatLng | null;
   homeAddress: string;
   schoolName: string;
+  mobile?: string;
 }
