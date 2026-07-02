@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { View, Pressable } from "react-native";
+import { View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { ArrowLeft, Wallet } from "lucide-react-native";
+import { Wallet } from "lucide-react-native";
 import {
   useStudent,
   useApproveStudent,
@@ -16,7 +16,6 @@ import {
   Screen,
   Text,
   VStack,
-  HStack,
   Card,
   Button,
   TextField,
@@ -78,19 +77,11 @@ export default function StudentApproveScreen() {
   };
 
   return (
-    <Screen overline="Student" title="Approve & assign">
-      <Pressable
-        onPress={() => navigation.goBack()}
-        hitSlop={6}
-        style={{ marginBottom: 16 }}
-      >
-        <HStack gap={6} align="center">
-          <ArrowLeft size={18} color={palette.text.link} strokeWidth={2} />
-          <Text variant="label" tone="link">
-            Back
-          </Text>
-        </HStack>
-      </Pressable>
+    <Screen
+      overline="Student"
+      title="Approve & assign"
+      onBack={() => navigation.goBack()}
+    >
 
       <Text variant="body-sm" tone="tertiary" style={{ marginBottom: 16 }}>
         Assign transport for {student?.name || "this student"} and set the fee.

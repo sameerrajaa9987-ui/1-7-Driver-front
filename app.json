@@ -7,22 +7,22 @@
       "policy": "appVersion"
     },
     "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
       "url": "https://u.expo.dev/9929b2b3-333b-47e7-8d35-c442b632391c"
     },
-    "orientation": "default",
+    "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "scheme": "schoolride",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0B1526"
-    },
     "ios": {
+      "bundleIdentifier": "com.schoolride.app",
+      "buildNumber": "1",
       "supportsTablet": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Used to show the van's live location during pickup and drop.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Used to share the van's live location with parents during a trip."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Used to share the van's live location with parents during a trip.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -35,6 +35,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B1526"
       },
+      "predictiveBackGestureEnabled": false,
       "package": "com.schoolride.app"
     },
     "web": {
@@ -45,7 +46,22 @@
       "expo-secure-store",
       "expo-localization",
       "expo-font",
-      "expo-location"
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Used to show the van's live location during pickup and drop."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "backgroundColor": "#0B1526",
+          "resizeMode": "contain"
+        }
+      ],
+      "expo-updates",
+      "expo-status-bar"
     ],
     "extra": {
       "eas": {

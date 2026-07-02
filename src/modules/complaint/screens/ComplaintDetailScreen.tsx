@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { View, Pressable } from "react-native";
+import { View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { ArrowLeft } from "lucide-react-native";
 import {
   useComplaint,
   useUpdateComplaintStatus,
@@ -94,20 +93,11 @@ export default function ComplaintDetailScreen() {
   };
 
   return (
-    <Screen overline="Support" title="Ticket">
-      <Pressable
-        onPress={() => navigation.goBack()}
-        hitSlop={6}
-        style={{ marginBottom: 16 }}
-      >
-        <HStack gap={6} align="center">
-          <ArrowLeft size={18} color={palette.text.link} strokeWidth={2} />
-          <Text variant="label" tone="link">
-            Back
-          </Text>
-        </HStack>
-      </Pressable>
-
+    <Screen
+      overline="Support"
+      title="Ticket"
+      onBack={() => navigation.goBack()}
+    >
       {!complaint ? (
         <Text variant="body-sm" tone="tertiary">
           {isLoading ? "Loading…" : "Ticket not found."}

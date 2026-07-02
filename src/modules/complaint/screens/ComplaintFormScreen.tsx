@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { View, Pressable } from "react-native";
+import { View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { ArrowLeft } from "lucide-react-native";
 import { useRaiseComplaint } from "@modules/complaint/hooks/useComplaints";
 import { ComplaintCategory } from "@modules/complaint/types";
 import { useStudents } from "@modules/student/hooks/useStudents";
@@ -11,7 +10,6 @@ import {
   Screen,
   Text,
   VStack,
-  HStack,
   Card,
   Button,
   TextField,
@@ -57,20 +55,11 @@ export default function ComplaintFormScreen() {
   const disabled = !category || !subject.trim() || !description.trim();
 
   return (
-    <Screen overline="Support" title="Raise a complaint">
-      <Pressable
-        onPress={() => navigation.goBack()}
-        hitSlop={6}
-        style={{ marginBottom: 16 }}
-      >
-        <HStack gap={6} align="center">
-          <ArrowLeft size={18} color={palette.text.link} strokeWidth={2} />
-          <Text variant="label" tone="link">
-            Back
-          </Text>
-        </HStack>
-      </Pressable>
-
+    <Screen
+      overline="Support"
+      title="Raise a complaint"
+      onBack={() => navigation.goBack()}
+    >
       {raiseMut.isError && (
         <View style={errorBox}>
           <Text variant="body-sm" tone="danger">

@@ -1,8 +1,7 @@
 import React from "react";
-import { View, Pressable, Platform, Alert, Image } from "react-native";
+import { View, Platform, Alert, Image } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import {
-  ArrowLeft,
   Pencil,
   Phone,
   MapPin,
@@ -115,19 +114,8 @@ export default function StudentDetailScreen() {
       overline="Student"
       title={student?.name || "Student"}
       subtitle={student?.mobile || ""}
+      onBack={() => navigation.goBack()}
     >
-      <Pressable
-        onPress={() => navigation.goBack()}
-        hitSlop={6}
-        style={{ marginBottom: 16 }}
-      >
-        <HStack gap={6} align="center">
-          <ArrowLeft size={18} color={palette.text.link} strokeWidth={2} />
-          <Text variant="label" tone="link">
-            Back to students
-          </Text>
-        </HStack>
-      </Pressable>
 
       <Card style={{ marginBottom: 16 }}>
         <HStack gap={14} align="center">

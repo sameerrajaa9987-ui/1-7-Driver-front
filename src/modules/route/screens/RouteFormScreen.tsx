@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { View, Pressable, Platform, Alert } from "react-native";
+import { View, Platform, Alert } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import {
-  ArrowLeft,
   Route as RouteIcon,
   Check,
   Users,
@@ -119,19 +118,11 @@ export default function RouteFormScreen() {
   };
 
   return (
-    <Screen overline="Routes" title={editing ? "Edit route" : "Add route"}>
-      <Pressable
-        onPress={() => navigation.goBack()}
-        hitSlop={6}
-        style={{ marginBottom: 16 }}
-      >
-        <HStack gap={6} align="center">
-          <ArrowLeft size={18} color={palette.text.link} strokeWidth={2} />
-          <Text variant="label" tone="link">
-            Back
-          </Text>
-        </HStack>
-      </Pressable>
+    <Screen
+      overline="Routes"
+      title={editing ? "Edit route" : "Add route"}
+      onBack={() => navigation.goBack()}
+    >
 
       {mut.isError && (
         <View style={errorBox}>

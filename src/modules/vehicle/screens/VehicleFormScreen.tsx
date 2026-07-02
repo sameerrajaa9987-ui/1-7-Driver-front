@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { View, Pressable, Platform, Alert } from "react-native";
+import { View, Platform, Alert } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { ArrowLeft, Bus, Car, Armchair, Trash2 } from "lucide-react-native";
+import { Bus, Car, Armchair, Trash2 } from "lucide-react-native";
 import {
   useVehicle,
   useCreateVehicle,
@@ -16,7 +16,6 @@ import {
   Screen,
   Text,
   VStack,
-  HStack,
   Card,
   Button,
   TextField,
@@ -86,19 +85,8 @@ export default function VehicleFormScreen() {
     <Screen
       overline="Vehicles"
       title={editing ? "Edit vehicle" : "Add vehicle"}
+      onBack={() => navigation.goBack()}
     >
-      <Pressable
-        onPress={() => navigation.goBack()}
-        hitSlop={6}
-        style={{ marginBottom: 16 }}
-      >
-        <HStack gap={6} align="center">
-          <ArrowLeft size={18} color={palette.text.link} strokeWidth={2} />
-          <Text variant="label" tone="link">
-            Back
-          </Text>
-        </HStack>
-      </Pressable>
 
       {mut.isError && (
         <View style={errorBox}>

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { View, Pressable } from "react-native";
+import { View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import {
-  ArrowLeft,
   User,
   Phone,
   School,
@@ -115,19 +114,8 @@ export default function StudentFormScreen() {
     <Screen
       overline="Students"
       title={editing ? "Edit student" : "Add student"}
+      onBack={() => navigation.goBack()}
     >
-      <Pressable
-        onPress={() => navigation.goBack()}
-        hitSlop={6}
-        style={{ marginBottom: 16 }}
-      >
-        <HStack gap={6} align="center">
-          <ArrowLeft size={18} color={palette.text.link} strokeWidth={2} />
-          <Text variant="label" tone="link">
-            Back
-          </Text>
-        </HStack>
-      </Pressable>
 
       {mut.isError && (
         <View style={errorBox}>
