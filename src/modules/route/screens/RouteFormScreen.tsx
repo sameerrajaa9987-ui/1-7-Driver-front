@@ -40,7 +40,7 @@ import {
 
 function confirm(msg: string, onYes: () => void) {
   if (Platform.OS === "web") {
-    // eslint-disable-next-line no-alert
+     
     if (window.confirm(msg)) onYes();
   } else {
     Alert.alert("Please confirm", msg, [
@@ -300,8 +300,8 @@ export default function RouteFormScreen() {
               </Text>
             </HStack>
             <Text variant="body-sm" tone="tertiary">
-              Assign a stand-in driver for today's trips on this route. Parents
-              are notified automatically.
+              Assign a stand-in driver for today&apos;s trips on this route.
+              Parents are notified automatically.
             </Text>
             <Select
               label="Substitute driver"

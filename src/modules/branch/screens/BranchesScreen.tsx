@@ -24,7 +24,7 @@ import {
 
 function confirm(msg: string, onYes: () => void) {
   if (Platform.OS === "web") {
-    // eslint-disable-next-line no-alert
+     
     if (window.confirm(msg)) onYes();
   } else {
     Alert.alert("Please confirm", msg, [

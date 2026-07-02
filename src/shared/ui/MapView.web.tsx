@@ -51,6 +51,21 @@ export default function LiveMap({
       ? { lat: markers[0].lat, lng: markers[0].lng }
       : { lat: 12.9716, lng: 77.5946 });
 
+  const renderMarkers = () => {
+    const L = LRef.current;
+    const layer = layerRef.current;
+    if (!L || !layer) return;
+    layer.clearLayers();
+    markers.forEach((m) => {
+      const marker = L.marker([m.lat, m.lng], {
+        icon: dot(KIND_COLOR[m.kind || "student"], L),
+      });
+      if (m.label) marker.bindPopup(m.label);
+      if (onMarkerPress) marker.on("click", () => onMarkerPress(m.id));
+      marker.addTo(layer);
+    });
+  };
+
   useEffect(() => {
     ensureLeafletCss();
     let disposed = false;
@@ -76,21 +91,6 @@ export default function LiveMap({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const renderMarkers = () => {
-    const L = LRef.current;
-    const layer = layerRef.current;
-    if (!L || !layer) return;
-    layer.clearLayers();
-    markers.forEach((m) => {
-      const marker = L.marker([m.lat, m.lng], {
-        icon: dot(KIND_COLOR[m.kind || "student"], L),
-      });
-      if (m.label) marker.bindPopup(m.label);
-      if (onMarkerPress) marker.on("click", () => onMarkerPress(m.id));
-      marker.addTo(layer);
-    });
-  };
 
   // Re-render markers + recenter on the vehicle when data changes.
   useEffect(() => {

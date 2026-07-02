@@ -29,7 +29,7 @@ import {
 /** Cross-platform confirm (web window.confirm, native Alert). */
 function confirm(msg: string, onYes: () => void) {
   if (Platform.OS === "web") {
-    // eslint-disable-next-line no-alert
+     
     if (window.confirm(msg)) onYes();
   } else {
     const { Alert } = require("react-native");

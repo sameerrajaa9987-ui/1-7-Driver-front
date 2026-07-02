@@ -106,7 +106,7 @@ export default function ParentPaymentsScreen() {
             </Text>
           </HStack>
           <Text variant="body-sm" style={{ color: "rgba(255,255,255,0.86)" }}>
-            Pay this month's transport fee in one tap. Your receipt appears
+            Pay this month&apos;s transport fee in one tap. Your receipt appears
             below the moment the payment is confirmed.
           </Text>
         </VStack>
@@ -234,7 +234,8 @@ function PayOnlineCard({
             </Text>
           </HStack>
           <Text variant="body-sm" style={{ color: tints.green.fg }}>
-            {childName}'s fee for {monthName(forMonth)} is paid via Razorpay.
+            {childName}&apos;s fee for {monthName(forMonth)} is paid via
+            Razorpay.
           </Text>
           <Text variant="body-sm" style={{ color: tints.green.fg }}>
             Receipt {receipt}

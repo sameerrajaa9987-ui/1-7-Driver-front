@@ -144,7 +144,7 @@ export default function DriverTodayScreen() {
       <View style={{ height: 24 }} />
 
       <Text variant="h3" tone="primary" style={{ marginBottom: 12 }}>
-        Today's trips
+        Today&apos;s trips
       </Text>
 
       {myTrips.length === 0 ? (
