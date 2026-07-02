@@ -8,6 +8,16 @@ export interface AttendanceSummary {
   tripsTotal: number;
 }
 
+export interface AttendanceRecord {
+  id: string;
+  studentId: string | null;
+  tripId: string | null;
+  type: "pickup" | "drop";
+  method: string;
+  verified: boolean;
+  createdAt: string;
+}
+
 export const attendanceApi = {
   scan: async (payload: ScanPayload) => {
     const res = await apiClient.post<{ success: boolean; data: ScanResult }>(
@@ -15,6 +25,15 @@ export const attendanceApi = {
       payload,
     );
     return res.data.data;
+  },
+  /** Verified attendance history (QR scans), newest first. */
+  list: async (params?: { studentId?: string; page?: number; limit?: number }) => {
+    const res = await apiClient.get<{
+      success: boolean;
+      data: AttendanceRecord[];
+      meta?: { total: number };
+    }>("/attendance", { params });
+    return res.data;
   },
   /** Spec §14 rollup — pickups / drops / absences for one student. */
   studentSummary: async (studentId: string) => {

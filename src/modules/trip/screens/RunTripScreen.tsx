@@ -363,14 +363,15 @@ function StopCard({
 function WaitingTimer({ arrivedAt }: { arrivedAt: string | null }) {
   const settings = useSettings();
   const minutes = settings.data?.waitingTimerMinutes ?? 5;
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(0);
 
   useEffect(() => {
+    setNow(Date.now());
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  if (!arrivedAt) return null;
+  if (!arrivedAt || now === 0) return null;
   const deadline = new Date(arrivedAt).getTime() + minutes * 60_000;
   const remaining = Math.max(0, deadline - now);
   const expired = remaining === 0;

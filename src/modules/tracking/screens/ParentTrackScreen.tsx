@@ -1,13 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View } from "react-native";
+import { Alert, Linking, Platform, Pressable, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Bus, Gauge, Navigation2 } from "lucide-react-native";
+import { Bus, Gauge, Navigation2, Phone, ShieldAlert } from "lucide-react-native";
 import { emitSocket, onSocket } from "@shared/api/socket";
 import LiveMap from "@shared/ui/MapView";
 import type { MapMarker } from "@shared/ui/map.types";
 import { useAuthStore } from "@shared/store/useAuthStore";
+import { useStudent } from "@modules/student/hooks/useStudents";
+import { useTriggerSos } from "@modules/sos/hooks/useSos";
 import {
   palette,
+  tints,
   tripStatusMeta,
   gradients,
   radius,
@@ -159,12 +162,77 @@ export default function ParentTrackScreen() {
   const steps = buildSteps(trip, myStop);
 
   return (
+    <TrackContent
+      trip={trip}
+      myStop={myStop}
+      meta={meta}
+      steps={steps}
+      frame={frame}
+      eta={eta}
+      markers={markers}
+      center={center}
+      refreshing={isRefetching || isLoading}
+      onRefresh={refetch}
+    />
+  );
+}
+
+function TrackContent({
+  trip,
+  myStop,
+  meta,
+  steps,
+  frame,
+  eta,
+  markers,
+  center,
+  refreshing,
+  onRefresh,
+}: {
+  trip: Trip;
+  myStop: TripStop;
+  meta: { label: string };
+  steps: TimelineStep[];
+  frame: VehicleFrame | null;
+  eta: string | null;
+  markers: MapMarker[];
+  center: { lat: number; lng: number };
+  refreshing: boolean;
+  onRefresh: () => void;
+}) {
+  // Assigned driver contact (enriched student detail) + parent-side SOS.
+  const { data: child } = useStudent(myStop.studentId);
+  const sos = useTriggerSos();
+
+  const raiseSos = () => {
+    const send = () =>
+      sos.mutate({
+        tripId: trip.id,
+        lat: frame?.lat ?? 0,
+        lng: frame?.lng ?? 0,
+        message: `Parent emergency about ${myStop.studentName}`,
+      });
+    if (Platform.OS === "web") {
+      if (window.confirm("Send an emergency alert to the operator?")) send();
+    } else {
+      Alert.alert(
+        "Emergency SOS",
+        "Alert the operator and driver about your child?",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Send SOS", style: "destructive", onPress: send },
+        ],
+      );
+    }
+  };
+
+  return (
     <Screen
       overline="Live"
       title="Track ride"
       subtitle={`${TRIP_TYPE_LABEL[trip.type]} · ${myStop.studentName}`}
-      refreshing={isRefetching || isLoading}
-      onRefresh={refetch}
+      refreshing={refreshing}
+      onRefresh={onRefresh}
     >
       {/* Status-first midnight hero — the one thing a parent wants to know. */}
       <View style={{ borderRadius: radius.xl, overflow: "hidden" }}>
@@ -224,6 +292,54 @@ export default function ParentTrackScreen() {
           </HStack>
         </LinearGradient>
       </View>
+
+      {/* Quick actions — call the assigned driver, or raise an emergency. */}
+      <HStack gap={10} style={{ marginTop: 12 }}>
+        {child?.driverMobile ? (
+          <Pressable
+            onPress={() => Linking.openURL(`tel:${child.driverMobile}`)}
+            style={{
+              flex: 1,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              paddingVertical: 12,
+              borderRadius: radius.md,
+              backgroundColor: tints.green.bg,
+              borderWidth: 1,
+              borderColor: tints.green.ring,
+            }}
+          >
+            <Phone size={16} color={tints.green.icon} strokeWidth={2.2} />
+            <Text variant="label" weight="600" style={{ color: tints.green.fg }}>
+              Call driver
+            </Text>
+          </Pressable>
+        ) : null}
+        <Pressable
+          onPress={raiseSos}
+          disabled={sos.isPending}
+          style={{
+            flex: 1,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            paddingVertical: 12,
+            borderRadius: radius.md,
+            backgroundColor: tints.red.bg,
+            borderWidth: 1,
+            borderColor: tints.red.ring,
+            opacity: sos.isPending ? 0.6 : 1,
+          }}
+        >
+          <ShieldAlert size={16} color={tints.red.icon} strokeWidth={2.2} />
+          <Text variant="label" weight="600" style={{ color: tints.red.fg }}>
+            {sos.isSuccess ? "SOS sent" : "Emergency SOS"}
+          </Text>
+        </Pressable>
+      </HStack>
 
       <View style={{ marginTop: 16 }}>
         <LiveMap markers={markers} center={center} height={300} />

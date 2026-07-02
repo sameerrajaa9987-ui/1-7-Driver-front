@@ -9,6 +9,15 @@ export const useAttendanceSummary = (studentId: string) =>
     enabled: !!studentId,
   });
 
+export const useAttendanceList = (params?: {
+  studentId?: string;
+  limit?: number;
+}) =>
+  useQuery({
+    queryKey: ["attendance-list", params],
+    queryFn: () => attendanceApi.list(params),
+  });
+
 export const useScanAttendance = () => {
   const qc = useQueryClient();
   return useMutation({

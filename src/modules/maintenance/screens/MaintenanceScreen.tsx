@@ -15,6 +15,11 @@ import {
   useDeleteMaintenance,
 } from "@modules/maintenance/hooks/useMaintenance";
 import { MaintenanceRecord } from "@modules/maintenance/types";
+import {
+  ComplianceSection,
+  InventorySection,
+  AnalyticsSection,
+} from "@modules/maintenance/components/FleetSections";
 import { useVehicles } from "@modules/vehicle/hooks/useVehicles";
 import { apiErrorMessage } from "@api/apiClient";
 import { palette, radius, tints } from "@shared/designSystem";
@@ -165,6 +170,11 @@ export default function MaintenanceScreen() {
           </Text>
         </View>
       ) : null}
+
+      {/* Deck: Vehicle & Inventory Management — compliance, assets, margin. */}
+      <AnalyticsSection />
+      <ComplianceSection vehicles={vehicles} />
+      <InventorySection vehicles={vehicles} />
 
       {addMut.isError && (
         <View style={errorBox}>

@@ -19,6 +19,12 @@ export const useMaintenanceSummary = (vehicleId?: string) =>
     queryFn: () => maintenanceApi.summary(vehicleId),
   });
 
+export const useFleetAnalytics = () =>
+  useQuery({
+    queryKey: ["fleet-analytics"],
+    queryFn: () => maintenanceApi.analytics(),
+  });
+
 export const useAddMaintenance = () => {
   const qc = useQueryClient();
   return useMutation({

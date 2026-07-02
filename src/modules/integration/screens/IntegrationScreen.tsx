@@ -8,13 +8,14 @@ import {
   Webhook,
   CheckCircle2,
   XCircle,
+  School,
 } from "lucide-react-native";
 import {
   useIntegration,
   useUpdateIntegration,
   useRegenerateKey,
 } from "@modules/integration/hooks/useIntegration";
-import { apiErrorMessage } from "@api/apiClient";
+import { apiClient, apiErrorMessage } from "@api/apiClient";
 import { palette, radius, tints } from "@shared/designSystem";
 import {
   Screen,
@@ -242,7 +243,119 @@ export default function IntegrationScreen() {
           />
         </VStack>
       </Card>
+
+      <SchoolAccessCard />
     </Screen>
+  );
+}
+
+/**
+ * School dashboard access (deck: Schools Dashboard). The admin creates a
+ * read-only login the partner school signs in with (email + password on the
+ * Operator/Driver tab) to see live student status, tracking and attendance.
+ */
+function SchoolAccessCard() {
+  const [accounts, setAccounts] = useState<
+    { id: string; email: string; fullName: string }[]
+  >([]);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const load = async () => {
+    try {
+      const res = await apiClient.get<{
+        success: boolean;
+        data: { id: string; email: string; fullName: string }[];
+      }>("/users/school-accounts");
+      setAccounts(res.data.data);
+    } catch {
+      // read-only extra — never block the screen
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const create = async () => {
+    setError("");
+    setBusy(true);
+    try {
+      await apiClient.post("/users/school-accounts", {
+        name: name.trim(),
+        email: email.trim(),
+        password,
+      });
+      setName("");
+      setEmail("");
+      setPassword("");
+      await load();
+    } catch (e) {
+      setError(apiErrorMessage(e, "Could not create school login"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card style={{ marginTop: 16 }}>
+      <VStack gap={14}>
+        <HStack gap={8} align="center">
+          <School size={18} color={palette.text.accent} strokeWidth={2} />
+          <Text variant="h4" tone="primary">
+            School dashboard access
+          </Text>
+        </HStack>
+        <Text variant="body-sm" tone="tertiary">
+          Give the partner school a read-only login: live student status, live
+          map, attendance reports and emergency alerts. No fees, no editing.
+        </Text>
+
+        {accounts.map((a) => (
+          <HStack key={a.id} gap={10} align="center">
+            <CheckCircle2 size={16} color={tints.green.icon} strokeWidth={2} />
+            <Text variant="body-sm" tone="secondary" style={{ flex: 1 }}>
+              {a.fullName} · {a.email}
+            </Text>
+          </HStack>
+        ))}
+
+        <TextField
+          label="School name"
+          value={name}
+          onChangeText={setName}
+          placeholder="St. Mary's High School"
+        />
+        <TextField
+          label="Login email"
+          value={email}
+          onChangeText={setEmail}
+          placeholder="transport@school.edu"
+          autoCapitalize="none"
+        />
+        <TextField
+          label="Password"
+          value={password}
+          onChangeText={setPassword}
+          placeholder="At least 6 characters"
+          secureTextEntry
+        />
+        {error ? (
+          <Text variant="caption" tone="danger">
+            {error}
+          </Text>
+        ) : null}
+        <Button
+          label="Create school login"
+          loading={busy}
+          disabled={!name.trim() || !email.trim() || password.length < 6}
+          onPress={create}
+        />
+      </VStack>
+    </Card>
   );
 }
 

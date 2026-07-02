@@ -6,6 +6,28 @@ import {
   Paginated,
 } from "@modules/maintenance/types";
 
+export interface FleetVehicleAnalytics {
+  vehicleId: string;
+  vehicleNumber: string;
+  model: string;
+  students: number;
+  expectedMonthly: number;
+  collectedThisMonth: number;
+  costThisMonth: number;
+  marginThisMonth: number;
+}
+
+export interface FleetAnalytics {
+  month: string;
+  vehicles: FleetVehicleAnalytics[];
+  totals: {
+    expectedMonthly: number;
+    collectedThisMonth: number;
+    costThisMonth: number;
+    marginThisMonth: number;
+  };
+}
+
 export const maintenanceApi = {
   list: async (params?: {
     page?: number;
@@ -26,6 +48,14 @@ export const maintenanceApi = {
     }>("/maintenance/summary", {
       params: vehicleId ? { vehicleId } : undefined,
     });
+    return res.data.data;
+  },
+  /** Per-vehicle profitability (revenue vs running cost, current month). */
+  analytics: async () => {
+    const res = await apiClient.get<{
+      success: boolean;
+      data: FleetAnalytics;
+    }>("/maintenance/analytics");
     return res.data.data;
   },
   create: async (payload: MaintenancePayload) => {

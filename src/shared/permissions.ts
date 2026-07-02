@@ -1,6 +1,6 @@
 /** Mirrors the backend role + permission keys (config/roles.js). */
 
-export type Role = "admin" | "driver" | "parent";
+export type Role = "admin" | "driver" | "parent" | "school";
 
 export const PERMISSIONS = {
   DASHBOARD_VIEW: "dashboard.view",
@@ -27,4 +27,5 @@ export const ROLE_LABELS: Record<Role, string> = {
   admin: "Operator",
   driver: "Driver",
   parent: "Parent",
+  school: "School",
 };

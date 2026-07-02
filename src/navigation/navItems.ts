@@ -51,6 +51,8 @@ import DriverSosScreen from "@modules/sos/screens/DriverSosScreen";
 
 // Phase 3
 import ActivityLogScreen from "@modules/activity-log/screens/ActivityLogScreen";
+import SchoolDashboardScreen from "@modules/dashboard/screens/SchoolDashboardScreen";
+import AttendanceReportScreen from "@modules/attendance/screens/AttendanceReportScreen";
 import MaintenanceScreen from "@modules/maintenance/screens/MaintenanceScreen";
 import BehaviourScreen from "@modules/telematics/screens/BehaviourScreen";
 import BranchesScreen from "@modules/branch/screens/BranchesScreen";
@@ -320,8 +322,58 @@ const PARENT: NavItem[] = [
   },
 ];
 
+const SCHOOL: NavItem[] = [
+  {
+    name: "Dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    component: SchoolDashboardScreen,
+    primary: true,
+    tint: "teal",
+  },
+  {
+    name: "Tracking",
+    label: "Live Map",
+    icon: Navigation,
+    component: TrackingScreen,
+    primary: true,
+    tint: "blue",
+  },
+  {
+    name: "Students",
+    label: "Students",
+    icon: GraduationCap,
+    component: StudentsNavigator,
+    primary: true,
+    tint: "green",
+  },
+  {
+    name: "Attendance",
+    label: "Attendance",
+    icon: ScanLine,
+    component: AttendanceReportScreen,
+    primary: true,
+    tint: "violet",
+  },
+  {
+    name: "Notifications",
+    label: "Alerts",
+    icon: Bell,
+    component: NotificationsScreen,
+    tint: "amber",
+  },
+  {
+    name: "Profile",
+    label: "Profile",
+    icon: User,
+    component: ProfileScreen,
+    tint: "teal",
+  },
+];
+
 export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   admin: ADMIN,
   driver: DRIVER,
   parent: PARENT,
+  school: SCHOOL,
 };

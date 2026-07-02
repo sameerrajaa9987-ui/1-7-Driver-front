@@ -38,6 +38,13 @@ export interface Student {
   joiningDate: string | null;
   dueDate: number;
 
+  // Enriched on GET /students/:id — assigned transport contact card, so
+  // parents can see/call the driver without admin permissions.
+  driverName?: string;
+  driverMobile?: string;
+  vehicleNumber?: string;
+  vehicleModel?: string;
+
   status: StudentStatus;
   addedByRole: string;
   approvedAt: string | null;

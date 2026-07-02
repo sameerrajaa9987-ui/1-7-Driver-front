@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Platform, Alert, Image } from "react-native";
+import { View, Platform, Alert, Image, Linking } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import {
   Pencil,
@@ -98,12 +98,18 @@ export default function StudentDetailScreen() {
   const { data: vehiclesData } = useVehicles();
   const { data: routesData } = useRoutes();
 
+  // Prefer the API-enriched transport contact (works for parents, who cannot
+  // list drivers/vehicles); fall back to the admin lists.
   const driverName =
+    student?.driverName ||
     (driversData?.data ?? []).find((d) => d.id === student?.driverId)
-      ?.fullName || null;
+      ?.fullName ||
+    null;
   const vehicleNumber =
+    student?.vehicleNumber ||
     (vehiclesData?.data ?? []).find((v) => v.id === student?.vehicleId)
-      ?.vehicleNumber || null;
+      ?.vehicleNumber ||
+    null;
   const routeName =
     (routesData?.data ?? []).find((r) => r.id === student?.routeId)?.name ||
     null;
@@ -213,6 +219,16 @@ export default function StudentDetailScreen() {
           <InfoRow icon={RouteIcon} label="Route" value={routeName} />
           <InfoRow icon={UserCheck} label="Driver" value={driverName} />
           <InfoRow icon={Bus} label="Vehicle" value={vehicleNumber} />
+          {student?.driverMobile ? (
+            <Button
+              label={`Call driver${driverName ? ` · ${driverName}` : ""}`}
+              variant="secondary"
+              icon={
+                <Phone size={16} color={palette.text.primary} strokeWidth={2} />
+              }
+              onPress={() => Linking.openURL(`tel:${student.driverMobile}`)}
+            />
+          ) : null}
         </VStack>
       </Card>
 
