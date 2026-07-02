@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "SchoolRide",
+    "slug": "school-transport",
+    "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/9929b2b3-333b-47e7-8d35-c442b632391c"
+    },
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "schoolride",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Used to show the van's live location during pickup and drop.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Used to share the van's live location with parents during a trip."
+      }
+    },
+    "android": {
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0E7C7B"
+      },
+      "package": "com.schoolride.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-localization",
+      "expo-font",
+      "expo-location"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9929b2b3-333b-47e7-8d35-c442b632391c"
+      }
+    },
+    "owner": "driver123s-team"
+  }
+}
