@@ -1,40 +1,49 @@
 /**
- * SchoolRide Design System (2026 edition).
+ * SchoolRide Design System — "Midnight Transit" (2026 edition).
  *
- * Calm teal + cobalt accent on near-white surfaces. Tuned for a school
- * transport app used all day on the go by operators, drivers, and parents:
- * strategic minimalism, generous whitespace, soft (blurred) elevation, large
- * rounded corners, and glass accents.
+ * A premium transport identity: deep midnight-navy ink, school-bus amber as
+ * the brand accent (black-on-amber, like a bus livery), warm paper surfaces,
+ * and dark glassy hero panels. Tuned for operators, drivers, and parents on
+ * the go: oversized display numerals, bento stat tiles, traffic-light status
+ * colours, soft blurred elevation, and large rounded corners.
+ *
+ * NOTE: token KEYS are stable across re-skins (`palette.teal` is the brand
+ * ramp slot — it now holds bus-amber; `palette.brand` is the readable alias
+ * for new code). Only values change between editions.
  */
 
+// Brand ramp — school-bus amber (signal yellow, deepened for UI use).
+const busAmber = {
+  900: "#744312",
+  800: "#8F5410",
+  700: "#B26B05",
+  600: "#D68806",
+  500: "#F0A70A",
+  400: "#F8B81E",
+  300: "#FBCE47",
+  200: "#FDE38A",
+  100: "#FEF0C7",
+  50: "#FFF9EB",
+} as const;
+
 export const palette = {
-  // Primary ink — slate (cool, calm, high-legibility text)
+  // Primary ink — midnight navy (deep, confident, high-legibility text)
   ink: {
-    900: "#0F172A",
-    800: "#1E293B",
-    700: "#334155",
-    600: "#475569",
-    500: "#64748B",
-    400: "#94A3B8",
-    300: "#CBD5E1",
-    200: "#E2E8F0",
-    100: "#F1F5F9",
-    50: "#F8FAFC",
+    900: "#0B1526",
+    800: "#142338",
+    700: "#20334E",
+    600: "#334766",
+    500: "#536685",
+    400: "#8292AC",
+    300: "#B3BFD1",
+    200: "#D9E0EA",
+    100: "#EDF1F6",
+    50: "#F7F9FC",
   },
 
-  // Primary brand — clinical teal
-  teal: {
-    900: "#0A3B3A",
-    800: "#0E4F4D",
-    700: "#0F6562",
-    600: "#0E7C7B",
-    500: "#14958F",
-    400: "#2FB3AC",
-    300: "#5FCFC8",
-    200: "#A7E6E1",
-    100: "#D6F5F2",
-    50: "#ECFBF9",
-  },
+  // Primary brand — school-bus amber (brand slot; see alias below)
+  teal: busAmber,
+  brand: busAmber,
 
   // Accent — cobalt blue (links, secondary CTAs, info)
   cobalt: {
@@ -50,7 +59,7 @@ export const palette = {
     50: "#EFF6FF",
   },
 
-  // Cool neutral surfaces
+  // Cool neutral ramp (kept for chart/void use)
   neutral: {
     0: "#FFFFFF",
     50: "#F8FAFC",
@@ -65,37 +74,38 @@ export const palette = {
     900: "#0F172A",
   },
 
+  // Warm paper surfaces — premium editorial/ticket feel under navy + amber.
   surface: {
     primary: "#FFFFFF",
-    secondary: "#F6F8FB",
-    tertiary: "#F1F5F9",
+    secondary: "#F7F6F3",
+    tertiary: "#F1EFEA",
     raised: "#FFFFFF",
-    sunken: "#EEF2F7",
-    dark: "#0F172A",
-    darkRaised: "#1E293B",
+    sunken: "#ECEAE4",
+    dark: "#0B1526",
+    darkRaised: "#142338",
   },
 
   text: {
-    primary: "#0F172A",
-    secondary: "#334155",
-    tertiary: "#64748B",
-    disabled: "#A0AEC0",
+    primary: "#0B1526",
+    secondary: "#2E4160",
+    tertiary: "#667085",
+    disabled: "#A5ADBB",
     inverse: "#FFFFFF",
-    accent: "#0E7C7B",
+    accent: "#B26B05",
     link: "#2563EB",
   },
 
   border: {
-    subtle: "#EEF2F7",
-    default: "#E2E8F0",
-    strong: "#CBD5E1",
-    focus: "#14958F",
-    dark: "#334155",
+    subtle: "#F0EEE8",
+    default: "#E7E4DD",
+    strong: "#D6D2C8",
+    focus: "#F0A70A",
+    dark: "#20334E",
   },
 
-  // Semantic — stock / expiry / billing states
+  // Semantic — traffic-light trip/fee states
   success: { bg: "#ECFDF5", text: "#047857", border: "#A7F3D0" },
-  warning: { bg: "#FFFBEB", text: "#B45309", border: "#FDE68A" },
+  warning: { bg: "#FFF9EB", text: "#B26B05", border: "#FDE38A" },
   danger: { bg: "#FEF2F2", text: "#B91C1C", border: "#FECACA" },
   info: { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" },
 } as const;
@@ -123,7 +133,7 @@ export const spacing = {
   "20": 80,
 } as const;
 
-// Soft, rounded corners for the clinical / minimal language.
+// Soft, rounded corners — large radii for the premium 2026 language.
 export const radius = {
   xs: 6,
   sm: 8,
@@ -135,8 +145,8 @@ export const radius = {
   full: 9999,
 } as const;
 
-// Thin, light hairline outline (replaces the farm's heavy 2px black outline).
-export const outline = { width: 1, color: "#E2E8F0" } as const;
+// Thin, warm hairline outline.
+export const outline = { width: 1, color: "#E7E4DD" } as const;
 
 export const typography = {
   display: {
@@ -225,9 +235,9 @@ export const typography = {
   },
 } as const;
 
-// Soft, blurred elevation (clinical depth) — replaces the farm's hard offsets.
+// Soft, blurred elevation — navy-tinted so shadows feel part of the ink.
 const soft = (y: number, radius: number, opacity: number, elev: number) => ({
-  shadowColor: "#0F172A",
+  shadowColor: "#0B1526",
   shadowOffset: { width: 0, height: y },
   shadowOpacity: opacity,
   shadowRadius: radius,
@@ -260,16 +270,17 @@ export const motion = {
   },
 } as const;
 
-/** Gradients — soft clinical sweeps consumed by expo-linear-gradient. */
+/** Gradients — dark-first hero sweeps consumed by expo-linear-gradient. */
 export const gradients = {
-  hero: ["#0E7C7B", "#0F6562", "#0A3B3A"] as const, // teal hero
-  teal: ["#14958F", "#0E7C7B"] as const,
+  hero: ["#16263F", "#0F1B2F", "#0A121F"] as const, // midnight hero
+  teal: ["#F8B81E", "#F0A70A"] as const, // brand (amber) sweep — key kept for compat
+  brand: ["#F8B81E", "#F0A70A"] as const,
   cobalt: ["#3B82F6", "#2563EB", "#1A4D9E"] as const,
-  light: ["#FFFFFF", "#F6F8FB"] as const,
-  mist: ["#ECFBF9", "#EFF6FF"] as const,
+  light: ["#FFFFFF", "#F7F6F3"] as const,
+  mist: ["#FFF9EB", "#EDF1F6"] as const, // amber dawn → navy mist
 } as const;
 
-/** Glass — translucent frosted panels for overlays over gradients/imagery. */
+/** Glass — translucent frosted panels for overlays over the midnight hero. */
 export const glass = {
   light: {
     backgroundColor: "rgba(255,255,255,0.16)",
@@ -282,7 +293,7 @@ export const glass = {
     borderWidth: 1,
   },
   dark: {
-    backgroundColor: "rgba(15,23,42,0.30)",
+    backgroundColor: "rgba(11,21,38,0.30)",
     borderColor: "rgba(255,255,255,0.12)",
     borderWidth: 1,
   },
@@ -290,15 +301,16 @@ export const glass = {
 
 /**
  * Category tints (2026 bento trend) — soft background + matching foreground for
- * tiles/chips, so metrics read at a glance by colour: blue = analytics, green =
- * healthy, amber = needs attention, red = problem, violet = journey/handover.
+ * tiles/chips, so metrics read at a glance by colour: navy = live/tracking,
+ * blue = analytics, green = safe/paid, amber = attention/arriving, red =
+ * problem, violet = journey/handover.
  */
 export const tints = {
-  neutral: { bg: "#F1F5F9", fg: "#475569", icon: "#64748B", ring: "#E2E8F0" },
-  teal: { bg: "#ECFBF9", fg: "#0E7C7B", icon: "#0E7C7B", ring: "#A7E6E1" },
+  neutral: { bg: "#F1EFEA", fg: "#4A5568", icon: "#667085", ring: "#E7E4DD" },
+  teal: { bg: "#EEF2F8", fg: "#1F3251", icon: "#33476B", ring: "#D9E0EA" }, // live/navy
   blue: { bg: "#EFF6FF", fg: "#2563EB", icon: "#2563EB", ring: "#BFDBFE" },
   green: { bg: "#ECFDF5", fg: "#047857", icon: "#059669", ring: "#A7F3D0" },
-  amber: { bg: "#FFFBEB", fg: "#B45309", icon: "#D97706", ring: "#FDE68A" },
+  amber: { bg: "#FFF9EB", fg: "#B26B05", icon: "#D68806", ring: "#FDE38A" },
   red: { bg: "#FEF2F2", fg: "#B91C1C", icon: "#DC2626", ring: "#FECACA" },
   violet: { bg: "#F5F3FF", fg: "#6D28D9", icon: "#7C3AED", ring: "#DDD6FE" },
 } as const;

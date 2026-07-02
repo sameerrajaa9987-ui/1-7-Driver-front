@@ -1,7 +1,8 @@
 /**
- * Button — clinical / minimal: solid fill, soft elevation, large rounded
- * corners, subtle scale-press. Variants: primary (teal), accent (cobalt),
- * secondary (hairline outline), ghost, destructive.
+ * Button — Midnight Transit: solid fill, soft elevation, large rounded
+ * corners, subtle scale-press. Variants: primary (midnight navy), accent
+ * (bus-amber with ink text — like a bus livery), secondary (hairline
+ * outline), ghost, destructive.
  */
 import React from "react";
 import {
@@ -111,16 +112,16 @@ function getVariantColors(v: Variant) {
   switch (v) {
     case "primary":
       return {
-        bg: palette.teal[600],
+        bg: palette.ink[900],
         text: "#FFFFFF",
-        border: palette.teal[600],
+        border: palette.ink[900],
         borderWidth: 0,
       };
     case "accent":
       return {
-        bg: palette.cobalt[600],
-        text: "#FFFFFF",
-        border: palette.cobalt[600],
+        bg: palette.brand[500],
+        text: palette.ink[900],
+        border: palette.brand[500],
         borderWidth: 0,
       };
     case "secondary":

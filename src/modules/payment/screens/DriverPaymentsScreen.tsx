@@ -8,6 +8,7 @@ import {
   useRecordPayment,
 } from "@modules/payment/hooks/usePayments";
 import { Payment, PaymentStatus } from "@modules/payment/types";
+import { tints } from "@shared/designSystem";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import {
   Screen,
@@ -199,7 +200,7 @@ function RecordedRow({ payment }: { payment: Payment }) {
       <HStack align="center" justify="space-between">
         <HStack gap={12} align="center" flex={1}>
           <View style={iconWrap}>
-            <Wallet size={18} color="#0E7C7B" strokeWidth={2} />
+            <Wallet size={18} color={tints.amber.icon} strokeWidth={2} />
           </View>
           <VStack gap={2} flex={1}>
             <Text variant="label-lg" tone="primary">
@@ -221,7 +222,7 @@ const iconWrap = {
   width: 40,
   height: 40,
   borderRadius: 12,
-  backgroundColor: "#ECFBF9",
+  backgroundColor: tints.amber.bg,
   alignItems: "center" as const,
   justifyContent: "center" as const,
 };

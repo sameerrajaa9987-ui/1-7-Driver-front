@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { View, StyleSheet, Pressable, ScrollView } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Bus, Mail, Lock, Phone, ShieldCheck } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Text, TextField, Button, VStack, HStack } from "@shared/ui";
-import { palette, radius, shadows } from "@shared/designSystem";
+import { palette, radius, shadows, gradients } from "@shared/designSystem";
 import { apiErrorMessage } from "@api/apiClient";
 import {
   useLogin,
@@ -18,46 +19,56 @@ export default function LoginScreen() {
   const [mode, setMode] = useState<Mode>("staff");
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: palette.surface.secondary }}
-      contentContainerStyle={styles.container}
+    <LinearGradient
+      colors={[...gradients.hero] as [string, string, ...string[]]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={{ flex: 1 }}
     >
-      <View style={styles.card}>
-        <View style={styles.logo}>
-          <Bus size={26} color="#FFFFFF" strokeWidth={2.2} />
-        </View>
-        <Text variant="h2" tone="primary" align="center">
-          SchoolRide
-        </Text>
-        <Text
-          variant="body-sm"
-          tone="tertiary"
-          align="center"
-          style={{ marginBottom: 18 }}
-        >
-          Safe, tracked school-van rides
-        </Text>
-
-        <View style={styles.tabs}>
-          <Tab
-            label="Operator / Driver"
-            active={mode === "staff"}
-            onPress={() => setMode("staff")}
-          />
-          <Tab
-            label="Parent"
-            active={mode === "parent"}
-            onPress={() => setMode("parent")}
-          />
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Brand — amber bus mark on midnight (bus-livery identity) */}
+        <View style={styles.brand}>
+          <View style={styles.logo}>
+            <Bus size={26} color={palette.ink[900]} strokeWidth={2.4} />
+          </View>
+          <Text variant="h1" align="center" style={{ color: "#FFFFFF" }}>
+            SchoolRide
+          </Text>
+          <Text
+            variant="body-sm"
+            align="center"
+            style={{ color: "rgba(255,255,255,0.66)" }}
+          >
+            Safe, tracked school-van rides
+          </Text>
         </View>
 
-        {mode === "staff" ? (
-          <StaffLogin onSignup={() => navigation.navigate("Signup")} />
-        ) : (
-          <ParentLogin />
-        )}
-      </View>
-    </ScrollView>
+        <View style={styles.card}>
+          <View style={styles.tabs}>
+            <Tab
+              label="Operator / Driver"
+              active={mode === "staff"}
+              onPress={() => setMode("staff")}
+            />
+            <Tab
+              label="Parent"
+              active={mode === "parent"}
+              onPress={() => setMode("parent")}
+            />
+          </View>
+
+          {mode === "staff" ? (
+            <StaffLogin onSignup={() => navigation.navigate("Signup")} />
+          ) : (
+            <ParentLogin />
+          )}
+        </View>
+      </ScrollView>
+    </LinearGradient>
   );
 }
 
@@ -75,7 +86,13 @@ function Tab({
       onPress={onPress}
       style={[styles.tab, active && styles.tabActive]}
     >
-      <Text variant="label" weight="600" tone={active ? "accent" : "tertiary"}>
+      <Text
+        variant="label"
+        weight="600"
+        style={{
+          color: active ? palette.ink[900] : palette.text.tertiary,
+        }}
+      >
         {label}
       </Text>
     </Pressable>
@@ -224,29 +241,32 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 24,
   },
+  brand: {
+    alignItems: "center",
+    gap: 4,
+    marginBottom: 22,
+  },
+  logo: {
+    width: 60,
+    height: 60,
+    borderRadius: radius.lg,
+    backgroundColor: palette.brand[500],
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+    ...shadows.lg,
+  },
   card: {
     width: "100%",
     maxWidth: 420,
     backgroundColor: palette.surface.primary,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: palette.border.default,
+    borderRadius: radius["2xl"],
     padding: 26,
-    ...shadows.md,
-  },
-  logo: {
-    alignSelf: "center",
-    width: 56,
-    height: 56,
-    borderRadius: radius.lg,
-    backgroundColor: palette.teal[600],
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 14,
+    ...shadows.xl,
   },
   tabs: {
     flexDirection: "row",
-    backgroundColor: palette.surface.secondary,
+    backgroundColor: palette.surface.tertiary,
     borderRadius: radius.md,
     padding: 4,
     marginBottom: 20,
@@ -258,7 +278,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tabActive: {
-    backgroundColor: palette.surface.primary,
+    backgroundColor: palette.brand[400],
     ...shadows.xs,
   },
 });

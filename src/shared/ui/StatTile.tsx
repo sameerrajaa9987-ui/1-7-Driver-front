@@ -45,19 +45,38 @@ export function StatTile({
     transform: [{ scale: scale.get() }],
   }));
 
-  const dark = tone !== "light";
-  const valueColor = dark ? "#FFFFFF" : palette.text.primary;
-  const labelColor = dark ? "rgba(255,255,255,0.82)" : palette.text.tertiary;
-  const iconColor = dark ? "#FFFFFF" : palette.teal[600];
-  const iconBg = dark ? "rgba(255,255,255,0.18)" : palette.teal[50];
+  // "teal" is the brand slot — a bus-amber tile with ink text (livery style);
+  // cobalt/slate are dark fills with white text; light is the paper tile.
+  const amber = tone === "teal";
+  const dark = tone === "cobalt" || tone === "slate";
+  const valueColor = dark
+    ? "#FFFFFF"
+    : amber
+      ? palette.ink[900]
+      : palette.text.primary;
+  const labelColor = dark
+    ? "rgba(255,255,255,0.82)"
+    : amber
+      ? "rgba(11,21,38,0.72)"
+      : palette.text.tertiary;
+  const iconColor = dark
+    ? "#FFFFFF"
+    : amber
+      ? palette.ink[900]
+      : palette.brand[600];
+  const iconBg = dark
+    ? "rgba(255,255,255,0.18)"
+    : amber
+      ? "rgba(11,21,38,0.10)"
+      : palette.brand[50];
 
   const fill =
     tone === "teal"
-      ? palette.teal[600]
+      ? palette.brand[400]
       : tone === "cobalt"
         ? palette.cobalt[600]
         : tone === "slate"
-          ? palette.ink[800]
+          ? palette.ink[900]
           : palette.surface.primary;
 
   const inner = (
@@ -83,7 +102,11 @@ export function StatTile({
           <Text
             variant="label-sm"
             style={{
-              color: dark ? "rgba(255,255,255,0.75)" : palette.text.tertiary,
+              color: dark
+                ? "rgba(255,255,255,0.75)"
+                : amber
+                  ? "rgba(11,21,38,0.66)"
+                  : palette.text.tertiary,
               marginTop: 6,
             }}
           >
@@ -100,7 +123,7 @@ export function StatTile({
         styles.tile,
         {
           backgroundColor: fill,
-          borderColor: dark ? "transparent" : outline.color,
+          borderColor: dark || amber ? "transparent" : outline.color,
         },
         shadows.sm,
         style,

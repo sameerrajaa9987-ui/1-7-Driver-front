@@ -1,11 +1,18 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Bus, Gauge, Navigation2 } from "lucide-react-native";
 import { emitSocket, onSocket } from "@shared/api/socket";
 import LiveMap from "@shared/ui/MapView";
 import type { MapMarker } from "@shared/ui/map.types";
 import { useAuthStore } from "@shared/store/useAuthStore";
-import { palette, tints, tripStatusMeta } from "@shared/designSystem";
+import {
+  palette,
+  tripStatusMeta,
+  gradients,
+  radius,
+  glass,
+} from "@shared/designSystem";
 import {
   Screen,
   Text,
@@ -149,7 +156,6 @@ export default function ParentTrackScreen() {
   }
 
   const meta = tripStatusMeta[trip.status] ?? tripStatusMeta.in_progress;
-  const t = tints[meta.tint];
   const steps = buildSteps(trip, myStop);
 
   return (
@@ -160,32 +166,67 @@ export default function ParentTrackScreen() {
       refreshing={isRefetching || isLoading}
       onRefresh={refetch}
     >
-      {/* Status-first hero — the one thing a parent wants to know. */}
-      <Card style={{ backgroundColor: t.bg, borderColor: t.ring }}>
-        <HStack justify="space-between" align="flex-start">
-          <VStack gap={6} flex={1}>
-            <Text variant="overline" style={{ color: t.fg, opacity: 0.8 }}>
-              {myStop.studentName}
-            </Text>
-            <Text variant="h1" style={{ color: t.fg }}>
-              {meta.label}
-            </Text>
-            {eta ? (
-              <HStack gap={6} align="center">
-                <Navigation2 size={14} color={t.fg} strokeWidth={2.2} />
-                <Text variant="label" weight="600" style={{ color: t.fg }}>
-                  {eta}
-                </Text>
-              </HStack>
-            ) : (
-              <Text variant="body-sm" style={{ color: t.fg, opacity: 0.85 }}>
-                {frame ? "Van is on the move" : "Waiting for the van's GPS…"}
+      {/* Status-first midnight hero — the one thing a parent wants to know. */}
+      <View style={{ borderRadius: radius.xl, overflow: "hidden" }}>
+        <LinearGradient
+          colors={[...gradients.hero] as [string, string, ...string[]]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ padding: 22 }}
+        >
+          <HStack justify="space-between" align="flex-start">
+            <VStack gap={6} flex={1}>
+              <Text
+                variant="overline"
+                style={{ color: palette.brand[400] }}
+              >
+                {myStop.studentName}
               </Text>
-            )}
-          </VStack>
-          {frame ? <LiveBadge /> : null}
-        </HStack>
-      </Card>
+              <Text variant="display-sm" style={{ color: "#FFFFFF" }}>
+                {meta.label}
+              </Text>
+              {eta ? (
+                <View
+                  style={[
+                    glass.light,
+                    {
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 7,
+                      alignSelf: "flex-start",
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                      borderRadius: radius.full,
+                      marginTop: 4,
+                    },
+                  ]}
+                >
+                  <Navigation2
+                    size={14}
+                    color={palette.brand[300]}
+                    strokeWidth={2.2}
+                  />
+                  <Text
+                    variant="label"
+                    weight="700"
+                    style={{ color: "#FFFFFF" }}
+                  >
+                    {eta}
+                  </Text>
+                </View>
+              ) : (
+                <Text
+                  variant="body-sm"
+                  style={{ color: "rgba(255,255,255,0.72)" }}
+                >
+                  {frame ? "Van is on the move" : "Waiting for the van's GPS…"}
+                </Text>
+              )}
+            </VStack>
+            {frame ? <LiveBadge tone={palette.brand[400]} /> : null}
+          </HStack>
+        </LinearGradient>
+      </View>
 
       <View style={{ marginTop: 16 }}>
         <LiveMap markers={markers} center={center} height={300} />

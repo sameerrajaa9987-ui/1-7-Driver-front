@@ -1,5 +1,6 @@
 import React from "react";
-import { View, useWindowDimensions } from "react-native";
+import { View, StyleSheet, useWindowDimensions } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import {
   Users,
   UserCheck,
@@ -13,12 +14,27 @@ import {
   CheckCircle2,
   AlertTriangle,
   ChevronRight,
+  Navigation,
 } from "lucide-react-native";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { useDashboardSummary } from "@modules/dashboard/hooks/useDashboard";
-import { palette, tints } from "@shared/designSystem";
+import {
+  palette,
+  tints,
+  radius,
+  gradients,
+  glass,
+} from "@shared/designSystem";
 import { useSectionNav } from "@navigation/AppNavigator";
-import { Screen, Text, VStack, HStack, Card, TintTile } from "@shared/ui";
+import {
+  Screen,
+  Text,
+  VStack,
+  HStack,
+  Card,
+  TintTile,
+  LiveBadge,
+} from "@shared/ui";
 
 const money = (n: number) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 
@@ -39,6 +55,7 @@ export default function DashboardScreen() {
   const today = data?.today;
   const pending = today?.pendingApproval ?? 0;
   const overdue = data?.finance.pending ?? 0;
+  const activeTrips = today?.activeTrips ?? 0;
 
   // Progressive disclosure: surface the "is everything okay?" answer first.
   const attention: { label: string; tint: "amber" | "red"; go: string }[] = [];
@@ -58,12 +75,6 @@ export default function DashboardScreen() {
 
   const tiles = [
     {
-      label: "Active students",
-      value: String(today?.totalStudents ?? 0),
-      icon: Users,
-      tint: "teal" as const,
-    },
-    {
       label: "Picked up",
       value: String(today?.pickedUp ?? 0),
       icon: UserCheck,
@@ -82,16 +93,22 @@ export default function DashboardScreen() {
       tint: "red" as const,
     },
     {
-      label: "Active trips",
-      value: String(today?.activeTrips ?? 0),
-      icon: Bus,
-      tint: "blue" as const,
-    },
-    {
       label: "Active vehicles",
       value: String(today?.activeVehicles ?? 0),
       icon: Truck,
       tint: "violet" as const,
+    },
+    {
+      label: "Active trips",
+      value: String(activeTrips),
+      icon: Bus,
+      tint: "blue" as const,
+    },
+    {
+      label: "Pending approval",
+      value: String(pending),
+      icon: Users,
+      tint: "amber" as const,
     },
   ];
   const tileWidth = `${100 / cols}%` as const;
@@ -103,33 +120,71 @@ export default function DashboardScreen() {
   ];
 
   return (
-    <Screen
-      overline={greeting()}
-      title={
-        user?.fullName ? `Hello, ${user.fullName.split(" ")[0]}` : "Dashboard"
-      }
-      subtitle="Today's operations at a glance"
-      refreshing={isRefetching || isLoading}
-      onRefresh={refetch}
-    >
+    <Screen refreshing={isRefetching || isLoading} onRefresh={refetch}>
+      {/* Midnight hero — greeting, north-star metric, live glass chips. */}
+      <View style={styles.heroWrap}>
+        <LinearGradient
+          colors={[...gradients.hero] as [string, string, ...string[]]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hero}
+        >
+          <HStack align="center" justify="space-between">
+            <VStack gap={2} flex={1}>
+              <Text
+                variant="overline"
+                style={{ color: palette.brand[400] }}
+              >
+                {greeting()}
+              </Text>
+              <Text variant="h1" style={{ color: "#FFFFFF" }}>
+                {user?.fullName
+                  ? `Hello, ${user.fullName.split(" ")[0]}`
+                  : "Dashboard"}
+              </Text>
+            </VStack>
+            {activeTrips > 0 ? <LiveBadge tone={palette.brand[400]} /> : null}
+          </HStack>
+
+          <HStack gap={20} align="flex-end" style={{ marginTop: 20 }}>
+            <VStack gap={2}>
+              <Text variant="display-lg" style={{ color: "#FFFFFF" }}>
+                {today?.totalStudents ?? 0}
+              </Text>
+              <Text
+                variant="caption"
+                style={{ color: "rgba(255,255,255,0.66)" }}
+              >
+                Students riding today
+              </Text>
+            </VStack>
+          </HStack>
+
+          <HStack gap={10} style={{ marginTop: 18 }}>
+            <HeroChip
+              icon={Bus}
+              label={`${activeTrips} live trip${activeTrips === 1 ? "" : "s"}`}
+              onPress={() => go("Tracking")}
+            />
+            <HeroChip
+              icon={Navigation}
+              label="Open live map"
+              onPress={() => go("Tracking")}
+            />
+          </HStack>
+        </LinearGradient>
+      </View>
+
       {/* Status-first banner — answers "is everything okay?" in one glance. */}
       <Card
         style={{
+          marginTop: 16,
           backgroundColor: allGood ? tints.green.bg : tints.amber.bg,
           borderColor: allGood ? tints.green.ring : tints.amber.ring,
         }}
       >
         <HStack gap={14} align="center">
-          <View
-            style={{
-              width: 46,
-              height: 46,
-              borderRadius: 14,
-              backgroundColor: "#FFFFFF",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
+          <View style={styles.statusIcon}>
             {allGood ? (
               <CheckCircle2
                 size={24}
@@ -234,8 +289,8 @@ export default function DashboardScreen() {
       </Text>
       <Card onPress={() => go("Payments")}>
         <HStack gap={16} align="center">
-          <View style={iconWrap}>
-            <IndianRupee size={22} color={palette.teal[600]} strokeWidth={2} />
+          <View style={styles.iconWrap}>
+            <IndianRupee size={22} color={palette.brand[600]} strokeWidth={2} />
           </View>
           <HStack flex={1} justify="space-between">
             <VStack gap={3}>
@@ -279,8 +334,12 @@ export default function DashboardScreen() {
           <View key={o.label} style={{ width: "33.33%", padding: 6 }}>
             <Card>
               <VStack gap={8} align="center">
-                <View style={iconWrap}>
-                  <o.icon size={20} color={palette.teal[600]} strokeWidth={2} />
+                <View style={styles.iconWrap}>
+                  <o.icon
+                    size={20}
+                    color={palette.brand[600]}
+                    strokeWidth={2}
+                  />
                 </View>
                 <Text variant="h2" tone="primary">
                   {o.value}
@@ -297,11 +356,55 @@ export default function DashboardScreen() {
   );
 }
 
-const iconWrap = {
-  width: 44,
-  height: 44,
-  borderRadius: 12,
-  backgroundColor: palette.teal[50],
-  alignItems: "center" as const,
-  justifyContent: "center" as const,
-};
+function HeroChip({
+  icon: Icon,
+  label,
+  onPress,
+}: {
+  icon: React.ComponentType<{
+    size?: number;
+    color?: string;
+    strokeWidth?: number;
+  }>;
+  label: string;
+  onPress?: () => void;
+}) {
+  return (
+    <Card onPress={onPress} padded={false} style={[styles.heroChip, glass.light]}>
+      <HStack gap={8} align="center" style={{ paddingHorizontal: 13, paddingVertical: 9 }}>
+        <Icon size={15} color={palette.brand[300]} strokeWidth={2.2} />
+        <Text variant="label" weight="600" style={{ color: "#FFFFFF" }}>
+          {label}
+        </Text>
+      </HStack>
+    </Card>
+  );
+}
+
+const styles = StyleSheet.create({
+  heroWrap: {
+    borderRadius: radius.xl,
+    overflow: "hidden",
+  },
+  hero: { padding: 22 },
+  heroChip: {
+    borderRadius: radius.full,
+    borderWidth: 1,
+  },
+  statusIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: palette.brand[50],
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});
