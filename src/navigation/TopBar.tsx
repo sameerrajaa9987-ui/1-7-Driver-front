@@ -37,7 +37,7 @@ export function TopBar({ items, active, onNavigate }: Props) {
             numberOfLines={1}
             style={{ color: "#FFFFFF", maxWidth: 220 }}
           >
-            {organization?.name || "SchoolRide"}
+            {organization?.name || "SchoolRide Connect"}
           </Text>
         </HStack>
 

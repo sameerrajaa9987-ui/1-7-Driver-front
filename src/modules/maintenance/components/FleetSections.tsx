@@ -27,6 +27,8 @@ import type {
   InventoryStatus,
 } from "@modules/inventory/api/inventoryApi";
 import { useFleetAnalytics } from "@modules/maintenance/hooks/useMaintenance";
+import { useSubscription } from "@modules/subscription/hooks/useSubscription";
+import { UpsellCard } from "@modules/subscription/components/UpsellCard";
 import { palette, radius, tints } from "@shared/designSystem";
 import {
   Text,
@@ -118,6 +120,8 @@ const INV_LABEL: Record<InventoryStatus, string> = {
 };
 
 export function InventorySection({ vehicles }: { vehicles: Vehicle[] }) {
+  const sub = useSubscription();
+  const locked = Boolean(sub.data && !sub.data.premium);
   const [showAdd, setShowAdd] = useState(false);
   const [name, setName] = useState("");
   const [vehicleId, setVehicleId] = useState<string | null>(null);
@@ -137,6 +141,14 @@ export function InventorySection({ vehicles }: { vehicles: Vehicle[] }) {
     const next = order[(order.indexOf(item.status) + 1) % order.length];
     updateMut.mutate({ id: item.id, status: next });
   };
+
+  if (locked) {
+    return (
+      <View style={{ marginBottom: 16 }}>
+        <UpsellCard feature="Safety inventory" />
+      </View>
+    );
+  }
 
   return (
     <VStack gap={12} style={{ marginBottom: 16 }}>
@@ -245,7 +257,16 @@ export function InventorySection({ vehicles }: { vehicles: Vehicle[] }) {
 
 // ---------------------------------------------------------------------------
 export function AnalyticsSection() {
+  const sub = useSubscription();
   const { data } = useFleetAnalytics();
+
+  if (sub.data && !sub.data.premium) {
+    return (
+      <View style={{ marginBottom: 16 }}>
+        <UpsellCard feature="Fleet profitability" />
+      </View>
+    );
+  }
   if (!data || data.vehicles.length === 0) return null;
 
   return (

@@ -287,6 +287,17 @@ function TrackContent({
                   {frame ? "Van is on the move" : "Waiting for the van's GPS…"}
                 </Text>
               )}
+              {child?.vehicleNumber || child?.driverName ? (
+                <Text
+                  variant="caption"
+                  style={{ color: "rgba(255,255,255,0.56)", marginTop: 6 }}
+                  numberOfLines={1}
+                >
+                  {[child?.vehicleNumber, child?.driverName]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </Text>
+              ) : null}
             </VStack>
             {frame ? <LiveBadge tone={palette.brand[400]} /> : null}
           </HStack>

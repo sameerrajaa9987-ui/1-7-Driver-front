@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   GraduationCap,
   History,
+  Crown,
   UserCog,
   Bus,
   Route as RouteIcon,
@@ -51,6 +52,7 @@ import DriverSosScreen from "@modules/sos/screens/DriverSosScreen";
 
 // Phase 3
 import ActivityLogScreen from "@modules/activity-log/screens/ActivityLogScreen";
+import SubscriptionScreen from "@modules/subscription/screens/SubscriptionScreen";
 import SchoolDashboardScreen from "@modules/dashboard/screens/SchoolDashboardScreen";
 import AttendanceReportScreen from "@modules/attendance/screens/AttendanceReportScreen";
 import MaintenanceScreen from "@modules/maintenance/screens/MaintenanceScreen";
@@ -192,6 +194,13 @@ const ADMIN: NavItem[] = [
     label: "Alerts",
     icon: Bell,
     component: NotificationsScreen,
+    tint: "amber",
+  },
+  {
+    name: "Subscription",
+    label: "Subscription",
+    icon: Crown,
+    component: SubscriptionScreen,
     tint: "amber",
   },
   {

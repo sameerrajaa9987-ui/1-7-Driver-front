@@ -19,7 +19,10 @@ import {
   useRemoveStudent,
   useStudentQr,
 } from "@modules/student/hooks/useStudents";
-import { useAttendanceSummary } from "@modules/attendance/hooks/useAttendance";
+import {
+  useAttendanceSummary,
+  useAttendanceList,
+} from "@modules/attendance/hooks/useAttendance";
 import { useStudentPaymentSummary } from "@modules/payment/hooks/usePayments";
 import { useDrivers } from "@modules/driver/hooks/useDrivers";
 import { useVehicles } from "@modules/vehicle/hooks/useVehicles";
@@ -88,6 +91,7 @@ export default function StudentDetailScreen() {
   const { data: student } = useStudent(id);
   const { data: qr } = useStudentQr(id);
   const { data: attendance } = useAttendanceSummary(id);
+  const { data: attHistory } = useAttendanceList({ studentId: id, limit: 5 });
   const { data: paySummary } = useStudentPaymentSummary(id);
   const removeMut = useRemoveStudent();
 
@@ -261,6 +265,31 @@ export default function StudentDetailScreen() {
               />
             </View>
           </HStack>
+          {(attHistory?.data ?? []).length > 0 ? (
+            <VStack gap={8}>
+              <Text variant="caption" tone="tertiary">
+                Recent verified attendance
+              </Text>
+              {(attHistory?.data ?? []).map((r) => (
+                <HStack key={r.id} gap={8} align="center">
+                  <StatusChip
+                    label={r.type === "pickup" ? "Picked up" : "Dropped"}
+                    tone={r.type === "pickup" ? "info" : "success"}
+                  />
+                  <Text variant="body-sm" tone="tertiary">
+                    {new Date(r.createdAt).toLocaleString([], {
+                      day: "2-digit",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                    {" · "}
+                    {r.method.toUpperCase()}
+                  </Text>
+                </HStack>
+              ))}
+            </VStack>
+          ) : null}
         </VStack>
       </Card>
 

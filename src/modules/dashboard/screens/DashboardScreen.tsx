@@ -18,6 +18,9 @@ import {
 } from "lucide-react-native";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { useDashboardSummary } from "@modules/dashboard/hooks/useDashboard";
+import { useDrivers } from "@modules/driver/hooks/useDrivers";
+import { useVehicles } from "@modules/vehicle/hooks/useVehicles";
+import { useMaintenanceSummary } from "@modules/maintenance/hooks/useMaintenance";
 import { palette, tints, radius, gradients, glass } from "@shared/designSystem";
 import { useSectionNav } from "@navigation/AppNavigator";
 import {
@@ -31,6 +34,42 @@ import {
 } from "@shared/ui";
 
 const money = (n: number) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
+
+const SOON_MS = 30 * 86_400_000;
+
+/** Drivers whose licence is expired or expires within 30 days. */
+function countExpiringLicences(drivers: { licenseExpiry: string | null }[]) {
+  const cutoff = Date.now() + SOON_MS;
+  return drivers.filter(
+    (d) => d.licenseExpiry && new Date(d.licenseExpiry).getTime() < cutoff,
+  ).length;
+}
+
+/** Vehicle compliance documents expiring within 30 days (or expired). */
+function countExpiringDocs(
+  vehicles: {
+    documents?: Record<string, { expiryDate: string | null }>;
+  }[],
+) {
+  const cutoff = Date.now() + SOON_MS;
+  return vehicles.reduce((count, v) => {
+    const docs = v.documents ? Object.values(v.documents) : [];
+    return (
+      count +
+      docs.filter(
+        (doc) =>
+          doc?.expiryDate && new Date(doc.expiryDate).getTime() < cutoff,
+      ).length
+    );
+  }, 0);
+}
+
+function isServiceDueSoon(nextServiceDue: string | null) {
+  return Boolean(
+    nextServiceDue &&
+      new Date(nextServiceDue).getTime() < Date.now() + 7 * 86_400_000,
+  );
+}
 
 function greeting() {
   const h = new Date().getHours();
@@ -51,6 +90,15 @@ export default function DashboardScreen() {
   const overdue = data?.finance.pending ?? 0;
   const activeTrips = today?.activeTrips ?? 0;
 
+  // Upcoming alerts (deck p.4): expiring licences, vehicle documents, service.
+  const { data: driversData } = useDrivers();
+  const { data: vehiclesData } = useVehicles();
+  const { data: maint } = useMaintenanceSummary();
+
+  const expiringLicences = countExpiringLicences(driversData?.data ?? []);
+  const expiringDocs = countExpiringDocs(vehiclesData?.data ?? []);
+  const serviceDueSoon = isServiceDueSoon(maint?.nextServiceDue ?? null);
+
   // Progressive disclosure: surface the "is everything okay?" answer first.
   const attention: { label: string; tint: "amber" | "red"; go: string }[] = [];
   if (pending > 0)
@@ -64,6 +112,24 @@ export default function DashboardScreen() {
       label: `${money(overdue)} in fees awaiting verification`,
       tint: "amber",
       go: "Payments",
+    });
+  if (expiringLicences > 0)
+    attention.push({
+      label: `${expiringLicences} driver licence${expiringLicences === 1 ? "" : "s"} expiring soon`,
+      tint: "red",
+      go: "Drivers",
+    });
+  if (expiringDocs > 0)
+    attention.push({
+      label: `${expiringDocs} vehicle document${expiringDocs === 1 ? "" : "s"} expiring within 30 days`,
+      tint: "amber",
+      go: "Maintenance",
+    });
+  if (serviceDueSoon)
+    attention.push({
+      label: `Vehicle service due ${String(maint!.nextServiceDue).slice(0, 10)}`,
+      tint: "amber",
+      go: "Maintenance",
     });
   const allGood = attention.length === 0;
 

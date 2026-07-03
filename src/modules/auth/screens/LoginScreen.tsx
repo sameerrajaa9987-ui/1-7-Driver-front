@@ -36,14 +36,14 @@ export default function LoginScreen() {
             <Bus size={26} color={palette.ink[900]} strokeWidth={2.4} />
           </View>
           <Text variant="h1" align="center" style={{ color: "#FFFFFF" }}>
-            SchoolRide
+            SchoolRide Connect
           </Text>
           <Text
             variant="body-sm"
             align="center"
             style={{ color: "rgba(255,255,255,0.66)" }}
           >
-            Safe, tracked school-van rides
+            Safe students. Connected parents. Empowered drivers.
           </Text>
         </View>
 

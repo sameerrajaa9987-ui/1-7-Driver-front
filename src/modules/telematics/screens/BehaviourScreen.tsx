@@ -13,6 +13,8 @@ import {
   useDriverScores,
   useTelematicsEvents,
 } from "@modules/telematics/hooks/useTelematics";
+import { useSubscription } from "@modules/subscription/hooks/useSubscription";
+import { UpsellCard } from "@modules/subscription/components/UpsellCard";
 import { DriverScore, BehaviourRating } from "@modules/telematics/types";
 import { palette, radius, tints, TintName } from "@shared/designSystem";
 import {
@@ -50,8 +52,17 @@ const RATING_LABEL: Record<BehaviourRating, string> = {
 };
 
 export default function BehaviourScreen() {
+  const sub = useSubscription();
   const { data, isLoading, refetch, isRefetching } = useDriverScores();
   const scores = [...(data ?? [])].sort((a, b) => a.score - b.score);
+
+  if (sub.data && !sub.data.premium) {
+    return (
+      <Screen overline="Safety" title="Driver behaviour">
+        <UpsellCard feature="Driver safety scorecards" />
+      </Screen>
+    );
+  }
 
   return (
     <Screen
