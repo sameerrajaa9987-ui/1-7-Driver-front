@@ -3,7 +3,7 @@ import { View, StyleSheet, Pressable, ScrollView } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Bus, Mail, Lock, Phone, ShieldCheck } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Text, TextField, Button, VStack, HStack } from "@shared/ui";
+import { Text, TextField, Button, VStack, HStack, HeroGlow } from "@shared/ui";
 import { palette, radius, shadows, gradients } from "@shared/designSystem";
 import { apiErrorMessage } from "@api/apiClient";
 import {
@@ -25,6 +25,7 @@ export default function LoginScreen() {
       end={{ x: 1, y: 1 }}
       style={{ flex: 1 }}
     >
+      <HeroGlow />
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.container}

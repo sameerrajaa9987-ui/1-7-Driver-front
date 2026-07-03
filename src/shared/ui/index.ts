@@ -16,6 +16,7 @@ export type { SelectOption } from "./Select";
 export { Fab } from "./Fab";
 export { Avatar } from "./Avatar";
 export { AppHeader } from "./AppHeader";
+export { HeroGlow } from "./HeroGlow";
 export { Screen } from "./Screen";
 export { EmptyState } from "./EmptyState";
 export { useBottomPadding, useTabBottomPadding } from "./useBottomPadding";

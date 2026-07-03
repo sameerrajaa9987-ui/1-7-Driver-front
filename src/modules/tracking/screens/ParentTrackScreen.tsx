@@ -25,6 +25,7 @@ import {
   EmptyState,
   StatusTimeline,
   LiveBadge,
+  HeroGlow,
   type TimelineStep,
 } from "@shared/ui";
 import { useStudents, useTrips } from "@modules/trip/hooks/useTrips";
@@ -242,6 +243,7 @@ function TrackContent({
           end={{ x: 1, y: 1 }}
           style={{ padding: 22 }}
         >
+          <HeroGlow />
           <HStack justify="space-between" align="flex-start">
             <VStack gap={6} flex={1}>
               <Text variant="overline" style={{ color: palette.brand[400] }}>

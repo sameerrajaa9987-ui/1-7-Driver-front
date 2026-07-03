@@ -19,8 +19,11 @@ export function EmptyState({ icon: Icon, title, message, action }: Props) {
       gap={12}
       style={{ marginTop: 64, paddingHorizontal: 24 }}
     >
-      <View style={styles.icon}>
-        <Icon size={32} color={palette.teal[500]} strokeWidth={1.6} />
+      {/* Layered disc — a soft halo behind the icon reads premium vs flat. */}
+      <View style={styles.halo}>
+        <View style={styles.icon}>
+          <Icon size={30} color={palette.brand[600]} strokeWidth={1.7} />
+        </View>
       </View>
       <Text variant="h3" tone="secondary" align="center">
         {title}
@@ -36,11 +39,21 @@ export function EmptyState({ icon: Icon, title, message, action }: Props) {
 }
 
 const styles = StyleSheet.create({
-  icon: {
-    width: 76,
-    height: 76,
+  halo: {
+    width: 96,
+    height: 96,
     borderRadius: radius.full,
-    backgroundColor: palette.teal[50],
+    backgroundColor: "rgba(240,167,10,0.08)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  icon: {
+    width: 68,
+    height: 68,
+    borderRadius: radius.full,
+    backgroundColor: palette.brand[50],
+    borderWidth: 1,
+    borderColor: palette.brand[100],
     alignItems: "center",
     justifyContent: "center",
   },

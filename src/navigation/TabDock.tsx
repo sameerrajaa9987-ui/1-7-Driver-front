@@ -5,7 +5,8 @@
  * pill; the dock itself is a floating midnight-navy capsule.
  */
 import React from "react";
-import { View, Pressable, StyleSheet } from "react-native";
+import { Platform, View, Pressable, StyleSheet } from "react-native";
+import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   useAnimatedStyle,
@@ -83,7 +84,12 @@ function DockTab({
   return (
     <Animated.View style={[{ flex: 1 }, animStyle]}>
       <Pressable
-        onPress={onPress}
+        onPress={() => {
+          if (Platform.OS !== "web") {
+            Haptics.selectionAsync().catch(() => {});
+          }
+          onPress();
+        }}
         onPressIn={() => scale.set(withSpring(0.92, motion.spring.crisp))}
         onPressOut={() => scale.set(withSpring(1, motion.spring.gentle))}
         style={[styles.tab, active && styles.tabActive]}

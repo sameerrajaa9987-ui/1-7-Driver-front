@@ -31,6 +31,7 @@ import {
   Card,
   TintTile,
   LiveBadge,
+  HeroGlow,
 } from "@shared/ui";
 
 const money = (n: number) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
@@ -189,6 +190,7 @@ export default function DashboardScreen() {
           end={{ x: 1, y: 1 }}
           style={styles.hero}
         >
+          <HeroGlow />
           <HStack align="center" justify="space-between">
             <VStack gap={2} flex={1}>
               <Text variant="overline" style={{ color: palette.brand[400] }}>

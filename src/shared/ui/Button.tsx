@@ -6,12 +6,14 @@
  */
 import React from "react";
 import {
+  Platform,
   Pressable,
   View,
   ActivityIndicator,
   StyleSheet,
   ViewStyle,
 } from "react-native";
+import * as Haptics from "expo-haptics";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -70,7 +72,15 @@ export function Button({
   return (
     <View style={[fullWidth ? { alignSelf: "stretch" } : undefined, style]}>
       <AnimatedPressable
-        onPress={onPress}
+        onPress={() => {
+          // 2026 tactile rule: an action without haptics is a guess.
+          if (Platform.OS !== "web") {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
+              () => {},
+            );
+          }
+          onPress?.();
+        }}
         disabled={isDisabled}
         onPressIn={() => press.set(withTiming(1, { duration: 90 }))}
         onPressOut={() => press.set(withTiming(0, { duration: 140 }))}

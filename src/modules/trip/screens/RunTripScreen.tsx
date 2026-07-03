@@ -143,6 +143,33 @@ export default function RunTripScreen() {
     >
       <LiveMap markers={markers} center={mapCenter} height={220} />
 
+      {/* Route progress — the driver's "how far along am I" at a glance. */}
+      {sorted.length > 0 ? (
+        <View style={{ marginTop: 14 }}>
+          <View
+            style={{
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: palette.ink[100],
+              overflow: "hidden",
+            }}
+          >
+            <View
+              style={{
+                width: `${Math.round(
+                  (sorted.filter((s) => isStopDone(s.status)).length /
+                    sorted.length) *
+                    100,
+                )}%`,
+                height: "100%",
+                borderRadius: 4,
+                backgroundColor: palette.brand[500],
+              }}
+            />
+          </View>
+        </View>
+      ) : null}
+
       {error ? (
         <Text variant="body-sm" tone="danger" style={{ marginTop: 12 }}>
           {error}

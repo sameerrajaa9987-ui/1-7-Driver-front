@@ -8,7 +8,15 @@ import { View, Pressable, StyleSheet } from "react-native";
 import { LogOut, ChevronRight } from "lucide-react-native";
 import { palette, radius, tints, gradients, glass } from "@shared/designSystem";
 import { LinearGradient } from "expo-linear-gradient";
-import { Screen, Text, VStack, HStack, Card, Avatar } from "@shared/ui";
+import {
+  Screen,
+  Text,
+  VStack,
+  HStack,
+  Card,
+  Avatar,
+  HeroGlow,
+} from "@shared/ui";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { ROLE_LABELS } from "@shared/permissions";
 import { useLogout } from "@modules/auth/hooks/useAuth";
@@ -34,6 +42,7 @@ export function MenuHubScreen({ items, onNavigate }: Props) {
           end={{ x: 1, y: 1 }}
           style={styles.hero}
         >
+          <HeroGlow />
           <HStack gap={14} align="center">
             <Avatar name={user?.fullName || "U"} size={52} />
             <VStack gap={2} flex={1}>

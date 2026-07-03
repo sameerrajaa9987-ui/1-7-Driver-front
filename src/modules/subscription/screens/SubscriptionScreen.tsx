@@ -23,6 +23,7 @@ import {
   Card,
   Button,
   StatusChip,
+  HeroGlow,
 } from "@shared/ui";
 
 function daysLeft(iso: string | null): number {
@@ -62,6 +63,7 @@ export default function SubscriptionScreen() {
           end={{ x: 1, y: 1 }}
           style={styles.hero}
         >
+          <HeroGlow />
           <HStack align="center" justify="space-between">
             <Text variant="overline" style={{ color: palette.brand[400] }}>
               Your subscription
