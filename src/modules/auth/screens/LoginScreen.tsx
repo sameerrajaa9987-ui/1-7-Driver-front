@@ -7,6 +7,12 @@ import { Text, TextField, Button, VStack, HStack, HeroGlow } from "@shared/ui";
 import { palette, radius, shadows, gradients } from "@shared/designSystem";
 import { apiErrorMessage } from "@api/apiClient";
 import {
+  localMobileDigits,
+  toIndianE164,
+  isValidIndianMobile,
+  normalizeLoginIdentifier,
+} from "@shared/phone";
+import {
   useLogin,
   useRequestOtp,
   useVerifyOtp,
@@ -109,7 +115,8 @@ function StaffLogin({ onSignup }: { onSignup: () => void }) {
   const submit = () => {
     setError("");
     login.mutate(
-      { identifier: identifier.trim(), password },
+      // Emails pass through; a bare 10-digit mobile becomes +91… for the driver.
+      { identifier: normalizeLoginIdentifier(identifier), password },
       { onError: (e) => setError(apiErrorMessage(e, "Sign in failed")) },
     );
   };
@@ -118,7 +125,7 @@ function StaffLogin({ onSignup }: { onSignup: () => void }) {
     <VStack gap={14}>
       <TextField
         label="Email or mobile"
-        placeholder="you@example.com or +9198…"
+        placeholder="you@example.com or 98765 43210"
         autoCapitalize="none"
         value={identifier}
         onChangeText={setIdentifier}
@@ -161,9 +168,12 @@ function ParentLogin() {
   const request = useRequestOtp();
   const verify = useVerifyOtp();
 
+  const e164 = toIndianE164(phone); // "" until 10 valid digits
+  const validPhone = isValidIndianMobile(phone);
+
   const sendCode = () => {
     setError("");
-    request.mutate(phone.trim(), {
+    request.mutate(e164, {
       onSuccess: (res) => {
         setSent(true);
         if (res.data?.devCode) setHint(`Dev code: ${res.data.devCode}`);
@@ -175,7 +185,7 @@ function ParentLogin() {
   const submit = () => {
     setError("");
     verify.mutate(
-      { phone: phone.trim(), code: code.trim() },
+      { phone: e164, code: code.trim() },
       { onError: (e) => setError(apiErrorMessage(e, "Invalid code")) },
     );
   };
@@ -184,12 +194,21 @@ function ParentLogin() {
     <VStack gap={14}>
       <TextField
         label="Mobile number"
-        placeholder="+9198…"
+        placeholder="98765 43210"
         keyboardType="phone-pad"
-        value={phone}
-        onChangeText={setPhone}
+        // Store only the local 10 digits; +91 is shown as a fixed prefix.
+        value={localMobileDigits(phone)}
+        onChangeText={(t) => setPhone(localMobileDigits(t))}
+        maxLength={10}
         editable={!sent}
-        leading={<Phone size={18} color={palette.text.tertiary} />}
+        leading={
+          <HStack gap={6} align="center">
+            <Phone size={18} color={palette.text.tertiary} />
+            <Text variant="body" tone="secondary" weight="600">
+              +91
+            </Text>
+          </HStack>
+        }
       />
       {sent && (
         <TextField
@@ -212,6 +231,7 @@ function ParentLogin() {
           label="Send code"
           onPress={sendCode}
           loading={request.isPending}
+          disabled={!validPhone}
         />
       ) : (
         <VStack gap={8}>
