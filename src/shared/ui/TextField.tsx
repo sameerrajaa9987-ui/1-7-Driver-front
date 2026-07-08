@@ -1,6 +1,14 @@
-/** TextField — clinical, focus-aware, soft rounded. */
+/** TextField — focus-aware, soft rounded. Password fields get a built-in
+ *  show/hide (eye) toggle automatically whenever `secureTextEntry` is set. */
 import React, { useState } from "react";
-import { View, TextInput, TextInputProps, StyleSheet } from "react-native";
+import {
+  View,
+  TextInput,
+  TextInputProps,
+  StyleSheet,
+  Pressable,
+} from "react-native";
+import { Eye, EyeOff } from "lucide-react-native";
 import { palette, radius, outline } from "../designSystem";
 import { Text } from "./Text";
 
@@ -21,12 +29,36 @@ export function TextField({
   ...inputProps
 }: Props) {
   const [focused, setFocused] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+
+  // A secure field renders an eye toggle by default (unless the caller passed
+  // its own trailing element). Tapping it reveals/hides the characters.
+  const isSecureField = Boolean(inputProps.secureTextEntry);
+  const effectiveSecure = isSecureField && !revealed;
 
   const borderColor = error
     ? palette.danger.text
     : focused
-      ? palette.teal[500]
+      ? palette.brand[500]
       : outline.color;
+
+  const eyeToggle =
+    isSecureField && !trailing ? (
+      <Pressable
+        hitSlop={10}
+        onPress={() => setRevealed((v) => !v)}
+        accessibilityLabel={revealed ? "Hide password" : "Show password"}
+        accessibilityRole="button"
+      >
+        {revealed ? (
+          <EyeOff size={18} color={palette.text.tertiary} strokeWidth={1.9} />
+        ) : (
+          <Eye size={18} color={palette.text.tertiary} strokeWidth={1.9} />
+        )}
+      </Pressable>
+    ) : (
+      trailing
+    );
 
   return (
     <View>
@@ -48,6 +80,7 @@ export function TextField({
         {leading && <View style={{ marginRight: 10 }}>{leading}</View>}
         <TextInput
           {...inputProps}
+          secureTextEntry={effectiveSecure}
           placeholderTextColor={palette.text.tertiary}
           onFocus={(e) => {
             setFocused(true);
@@ -60,7 +93,7 @@ export function TextField({
           // @ts-expect-error web-only outline reset
           style={[styles.input, { outlineStyle: "none" }]}
         />
-        {trailing && <View style={{ marginLeft: 10 }}>{trailing}</View>}
+        {eyeToggle ? <View style={{ marginLeft: 10 }}>{eyeToggle}</View> : null}
       </View>
       {error ? (
         <Text variant="caption" tone="danger" style={{ marginTop: 6 }}>
