@@ -44,6 +44,7 @@ export interface Student {
   driverMobile?: string;
   vehicleNumber?: string;
   vehicleModel?: string;
+  routeName?: string;
 
   status: StudentStatus;
   addedByRole: string;

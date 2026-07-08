@@ -98,12 +98,13 @@ export default function StudentDetailScreen() {
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const admin = isAdmin();
 
-  const { data: driversData } = useDrivers();
-  const { data: vehiclesData } = useVehicles();
-  const { data: routesData } = useRoutes();
+  // These list endpoints are admin-only — only fetch them for an admin viewer.
+  // Non-admins (driver / parent / school) get the transport contact straight
+  // from the enriched student record, so they never hit a 403.
+  const { data: driversData } = useDrivers({ enabled: admin });
+  const { data: vehiclesData } = useVehicles({ enabled: admin });
+  const { data: routesData } = useRoutes({ enabled: admin });
 
-  // Prefer the API-enriched transport contact (works for parents, who cannot
-  // list drivers/vehicles); fall back to the admin lists.
   const driverName =
     student?.driverName ||
     (driversData?.data ?? []).find((d) => d.id === student?.driverId)
@@ -115,6 +116,7 @@ export default function StudentDetailScreen() {
       ?.vehicleNumber ||
     null;
   const routeName =
+    student?.routeName ||
     (routesData?.data ?? []).find((r) => r.id === student?.routeId)?.name ||
     null;
 

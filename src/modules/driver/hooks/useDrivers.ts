@@ -2,10 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { driverApi } from "@modules/driver/api/driverApi";
 import { DriverPayload } from "@modules/driver/types";
 
-export const useDrivers = (params?: { search?: string }) =>
+export const useDrivers = (params?: { search?: string; enabled?: boolean }) =>
   useQuery({
-    queryKey: ["drivers", params],
-    queryFn: () => driverApi.list(params),
+    queryKey: ["drivers", params?.search ?? null],
+    queryFn: () => driverApi.list({ search: params?.search }),
+    // Admin-only endpoint — callers gate it so non-admins don't 403.
+    enabled: params?.enabled ?? true,
   });
 
 export const useDriver = (id: string) =>

@@ -2,10 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { routeApi } from "@modules/route/api/routeApi";
 import { RoutePayload } from "@modules/route/types";
 
-export const useRoutes = (params?: { search?: string }) =>
+export const useRoutes = (params?: { search?: string; enabled?: boolean }) =>
   useQuery({
-    queryKey: ["routes", params],
-    queryFn: () => routeApi.list(params),
+    queryKey: ["routes", params?.search ?? null],
+    queryFn: () => routeApi.list({ search: params?.search }),
+    // Admin + driver read routes; gate for parent/school callers.
+    enabled: params?.enabled ?? true,
   });
 
 export const useRoute = (id: string) =>
