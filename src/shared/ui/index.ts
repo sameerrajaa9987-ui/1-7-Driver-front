@@ -17,6 +17,7 @@ export { Fab } from "./Fab";
 export { Avatar } from "./Avatar";
 export { AppHeader } from "./AppHeader";
 export { HeroGlow } from "./HeroGlow";
+export { BrandLogo } from "./BrandLogo";
 export { Screen } from "./Screen";
 export { EmptyState } from "./EmptyState";
 export { useBottomPadding, useTabBottomPadding } from "./useBottomPadding";

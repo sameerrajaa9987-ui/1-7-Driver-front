@@ -5,7 +5,11 @@
  */
 import React, { useMemo, useState } from "react";
 import { View, StyleSheet } from "react-native";
-import { ClipboardCheck, ArrowUpRight, ArrowDownLeft } from "lucide-react-native";
+import {
+  ClipboardCheck,
+  ArrowUpRight,
+  ArrowDownLeft,
+} from "lucide-react-native";
 import { useAttendanceList } from "@modules/attendance/hooks/useAttendance";
 import { useStudents } from "@modules/student/hooks/useStudents";
 import { radius, tints } from "@shared/designSystem";

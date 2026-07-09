@@ -28,7 +28,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useOnboardingStore } from "@shared/store/useOnboardingStore";
 import { palette, radius, gradients, glass } from "@shared/designSystem";
-import { Text, VStack, Button, HeroGlow } from "@shared/ui";
+import { Text, VStack, Button, BrandLogo } from "@shared/ui";
 
 interface Slide {
   icon: LucideIcon;
@@ -97,13 +97,12 @@ export default function OnboardingScreen() {
       end={{ x: 1, y: 1 }}
       style={{ flex: 1 }}
     >
-      <HeroGlow />
       <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
         {/* Brand + Skip */}
         <View style={styles.topBar}>
           <View style={styles.brand}>
             <View style={styles.logo}>
-              <Text style={{ fontSize: 15 }}>🚌</Text>
+              <BrandLogo size={22} tone="ink" />
             </View>
             <Text variant="label-lg" weight="700" style={{ color: "#FFFFFF" }}>
               SchoolRide Connect
@@ -131,9 +130,7 @@ export default function OnboardingScreen() {
           showsHorizontalScrollIndicator={false}
           onScroll={onScroll}
           scrollEventThrottle={16}
-          renderItem={({ item }) => (
-            <SlideView slide={item} width={width} />
-          )}
+          renderItem={({ item }) => <SlideView slide={item} width={width} />}
         />
 
         {/* Pager dots */}
@@ -156,7 +153,11 @@ export default function OnboardingScreen() {
             variant="accent"
             onPress={onNext}
             rightIcon={
-              <ArrowRight size={18} color={palette.ink[900]} strokeWidth={2.4} />
+              <ArrowRight
+                size={18}
+                color={palette.ink[900]}
+                strokeWidth={2.4}
+              />
             }
           />
         </View>

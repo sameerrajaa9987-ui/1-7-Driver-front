@@ -181,7 +181,11 @@ export default function VehicleFormScreen() {
       <Card style={{ marginBottom: 16 }}>
         <VStack gap={16}>
           <HStack gap={8} align="center">
-            <ShieldCheck size={18} color={palette.text.accent} strokeWidth={2} />
+            <ShieldCheck
+              size={18}
+              color={palette.text.accent}
+              strokeWidth={2}
+            />
             <Text variant="h4" tone="primary">
               Compliance documents
             </Text>

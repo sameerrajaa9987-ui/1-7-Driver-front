@@ -170,7 +170,11 @@ function HeroChip({
   onPress?: () => void;
 }) {
   return (
-    <Card onPress={onPress} padded={false} style={[styles.heroChip, glass.light]}>
+    <Card
+      onPress={onPress}
+      padded={false}
+      style={[styles.heroChip, glass.light]}
+    >
       <HStack
         gap={8}
         align="center"

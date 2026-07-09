@@ -1,7 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Alert, Linking, Platform, Pressable, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Bus, Gauge, Navigation2, Phone, ShieldAlert } from "lucide-react-native";
+import {
+  Bus,
+  Gauge,
+  Navigation2,
+  Phone,
+  ShieldAlert,
+} from "lucide-react-native";
 import { emitSocket, onSocket } from "@shared/api/socket";
 import LiveMap from "@shared/ui/MapView";
 import type { MapMarker } from "@shared/ui/map.types";
@@ -325,7 +331,11 @@ function TrackContent({
             }}
           >
             <Phone size={16} color={tints.green.icon} strokeWidth={2.2} />
-            <Text variant="label" weight="600" style={{ color: tints.green.fg }}>
+            <Text
+              variant="label"
+              weight="600"
+              style={{ color: tints.green.fg }}
+            >
               Call driver
             </Text>
           </Pressable>

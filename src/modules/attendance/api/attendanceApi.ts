@@ -27,7 +27,11 @@ export const attendanceApi = {
     return res.data.data;
   },
   /** Verified attendance history (QR scans), newest first. */
-  list: async (params?: { studentId?: string; page?: number; limit?: number }) => {
+  list: async (params?: {
+    studentId?: string;
+    page?: number;
+    limit?: number;
+  }) => {
     const res = await apiClient.get<{
       success: boolean;
       data: AttendanceRecord[];

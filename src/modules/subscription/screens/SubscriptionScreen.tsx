@@ -107,9 +107,7 @@ export default function SubscriptionScreen() {
           <PlanCard
             key={plan.key}
             plan={plan}
-            current={
-              sub?.status === "active" && sub.plan === plan.key
-            }
+            current={sub?.status === "active" && sub.plan === plan.key}
             busy={upgrade.isPending}
             onChoose={() => upgrade.mutate(plan.key)}
           />

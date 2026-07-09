@@ -1,113 +1,140 @@
 /**
- * SchoolRide Design System — "Midnight Transit" (2026 edition).
+ * SchoolRide Connect — "Editorial Ledger" (2026 design system).
  *
- * A premium transport identity: deep midnight-navy ink, school-bus amber as
- * the brand accent (black-on-amber, like a bus livery), warm paper surfaces,
- * and dark glassy hero panels. Tuned for operators, drivers, and parents on
- * the go: oversized display numerals, bento stat tiles, traffic-light status
- * colours, soft blurred elevation, and large rounded corners.
+ * A deliberately human, non-generic identity that reads as *designed*, not
+ * AI-generated: warm paper surfaces, near-black warm ink, and ONE disciplined
+ * marigold accent (school-bus livery, used only as solid blocks / underlines
+ * — never gradients or glow). Typography is the hero — Fraunces (editorial
+ * serif) for headlines and big numerals, Inter (clean grotesque) for UI, with
+ * tabular "ledger" figures for money and counts. Flat surfaces, hairline
+ * borders, restraint over decoration.
  *
- * NOTE: token KEYS are stable across re-skins (`palette.teal` is the brand
- * ramp slot — it now holds bus-amber; `palette.brand` is the readable alias
- * for new code). Only values change between editions.
+ * Token KEYS are stable across re-skins so the whole kit re-themes centrally;
+ * `palette.brand` is the accent ramp, `palette.teal` is a compatibility alias.
  */
 
-// Brand ramp — school-bus amber (signal yellow, deepened for UI use).
-const busAmber = {
-  900: "#744312",
-  800: "#8F5410",
-  700: "#B26B05",
-  600: "#D68806",
-  500: "#F0A70A",
-  400: "#F8B81E",
-  300: "#FBCE47",
-  200: "#FDE38A",
-  100: "#FEF0C7",
-  50: "#FFF9EB",
+// ---- fonts -----------------------------------------------------------------
+export const fonts = {
+  serif: {
+    600: "Fraunces_600SemiBold",
+    700: "Fraunces_700Bold",
+    900: "Fraunces_900Black",
+  },
+  sans: {
+    400: "Inter_400Regular",
+    500: "Inter_500Medium",
+    600: "Inter_600SemiBold",
+    700: "Inter_700Bold",
+  },
+} as const;
+
+type FamilyName = "serif" | "sans";
+/** Resolve a (family, weight) to the exact bundled font, nearest weight down. */
+export function resolveFont(family: FamilyName, weight: number): string {
+  const table = fonts[family];
+  const keys = Object.keys(table)
+    .map(Number)
+    .sort((a, b) => a - b);
+  let pick = keys[0];
+  for (const k of keys) if (k <= weight) pick = k;
+  return table[pick as keyof typeof table];
+}
+
+// Accent ramp — marigold (warm saffron school-bus yellow, deepened for UI).
+const marigold = {
+  900: "#5E3D06",
+  800: "#7A4F08",
+  700: "#9A650A",
+  600: "#C0820C",
+  500: "#E19A10", // primary accent
+  400: "#F0AE2E",
+  300: "#F6C65E",
+  200: "#FADFA0",
+  100: "#FCEFCF",
+  50: "#FDF8EC",
 } as const;
 
 export const palette = {
-  // Primary ink — midnight navy (deep, confident, high-legibility text)
+  // Primary ink — warm near-black charcoal (not blue; warmth reads human).
   ink: {
-    900: "#0B1526",
-    800: "#142338",
-    700: "#20334E",
-    600: "#334766",
-    500: "#536685",
-    400: "#8292AC",
-    300: "#B3BFD1",
-    200: "#D9E0EA",
-    100: "#EDF1F6",
-    50: "#F7F9FC",
+    900: "#1A1712",
+    800: "#2A251D",
+    700: "#3D362B",
+    600: "#57503F",
+    500: "#736A57",
+    400: "#9A9080",
+    300: "#C2B9A8",
+    200: "#DED6C6",
+    100: "#EDE7DB",
+    50: "#F6F2EA",
   },
 
-  // Primary brand — school-bus amber (brand slot; see alias below)
-  teal: busAmber,
-  brand: busAmber,
+  // Accent — marigold (brand slot + compatibility alias)
+  teal: marigold,
+  brand: marigold,
 
-  // Accent — cobalt blue (links, secondary CTAs, info)
+  // A single quiet secondary — ink blue, only for links/info (never decoration)
   cobalt: {
-    900: "#0B254E",
-    800: "#103572",
-    700: "#1A4D9E",
-    600: "#2563EB",
-    500: "#3B82F6",
-    400: "#60A5FA",
-    300: "#93C5FD",
-    200: "#BFDBFE",
-    100: "#DBEAFE",
-    50: "#EFF6FF",
+    900: "#132A3A",
+    800: "#1C3D53",
+    700: "#26526F",
+    600: "#356C8F",
+    500: "#4A86AB",
+    400: "#72A6C4",
+    300: "#A0C6DC",
+    200: "#C8DEEC",
+    100: "#E4F0F6",
+    50: "#F2F8FB",
   },
 
-  // Cool neutral ramp (kept for chart/void use)
   neutral: {
     0: "#FFFFFF",
-    50: "#F8FAFC",
-    100: "#F1F5F9",
-    200: "#E2E8F0",
-    300: "#CBD5E1",
-    400: "#94A3B8",
-    500: "#64748B",
-    600: "#475569",
-    700: "#334155",
-    800: "#1E293B",
-    900: "#0F172A",
+    50: "#F6F2EA",
+    100: "#EDE7DB",
+    200: "#DED6C6",
+    300: "#C2B9A8",
+    400: "#9A9080",
+    500: "#736A57",
+    600: "#57503F",
+    700: "#3D362B",
+    800: "#2A251D",
+    900: "#1A1712",
   },
 
-  // Warm paper surfaces — premium editorial/ticket feel under navy + amber.
+  // Warm paper surfaces — the editorial ledger feel.
   surface: {
-    primary: "#FFFFFF",
-    secondary: "#F7F6F3",
-    tertiary: "#F1EFEA",
+    primary: "#FFFFFF", // cards
+    secondary: "#F7F3EC", // app background (warm paper)
+    tertiary: "#F0EBE1",
     raised: "#FFFFFF",
-    sunken: "#ECEAE4",
-    dark: "#0B1526",
-    darkRaised: "#142338",
+    sunken: "#EBE5D9",
+    dark: "#1A1712", // the rare ink panel
+    darkRaised: "#2A251D",
   },
 
   text: {
-    primary: "#0B1526",
-    secondary: "#2E4160",
-    tertiary: "#667085",
-    disabled: "#A5ADBB",
-    inverse: "#FFFFFF",
-    accent: "#B26B05",
-    link: "#2563EB",
+    primary: "#1A1712",
+    secondary: "#57503F",
+    tertiary: "#8A8272",
+    disabled: "#B4AC9C",
+    inverse: "#FBF8F2",
+    accent: "#9A650A",
+    link: "#26526F",
   },
 
   border: {
-    subtle: "#F0EEE8",
-    default: "#E7E4DD",
-    strong: "#D6D2C8",
-    focus: "#F0A70A",
-    dark: "#20334E",
+    subtle: "#EFEADF",
+    default: "#E4DDCF",
+    strong: "#D3CABA",
+    focus: "#E19A10",
+    dark: "#3D362B",
   },
 
-  // Semantic — traffic-light trip/fee states
-  success: { bg: "#ECFDF5", text: "#047857", border: "#A7F3D0" },
-  warning: { bg: "#FFF9EB", text: "#B26B05", border: "#FDE38A" },
-  danger: { bg: "#FEF2F2", text: "#B91C1C", border: "#FECACA" },
-  info: { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" },
+  // Semantic — muted, editorial (desaturated, not neon).
+  success: { bg: "#EDF4EC", text: "#3D6B4A", border: "#CBE0CD" },
+  warning: { bg: "#FBF1D9", text: "#8A5A12", border: "#F0DCA8" },
+  danger: { bg: "#F9ECE7", text: "#A23A22", border: "#EDCFC5" },
+  info: { bg: "#EAF2F6", text: "#26526F", border: "#CFE0EA" },
 } as const;
 
 export const spacing = {
@@ -133,111 +160,142 @@ export const spacing = {
   "20": 80,
 } as const;
 
-// Soft, rounded corners — large radii for the premium 2026 language.
+// Editorial corners — tighter, more considered (not pill-everything).
 export const radius = {
-  xs: 6,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  "2xl": 24,
-  "3xl": 28,
+  xs: 4,
+  sm: 6,
+  md: 10,
+  lg: 14,
+  xl: 18,
+  "2xl": 22,
+  "3xl": 26,
   full: 9999,
 } as const;
 
-// Thin, warm hairline outline.
-export const outline = { width: 1, color: "#E7E4DD" } as const;
+// Hairline outline — the primary separation device (borders over shadows).
+export const outline = { width: 1, color: "#E4DDCF" } as const;
 
+/**
+ * Typography — every variant declares its `family` (serif = Fraunces editorial,
+ * sans = Inter UI) and default `weight`; `Text` resolves the exact font. Serif
+ * carries the headlines and big numerals; sans carries everything functional.
+ */
 export const typography = {
   display: {
     large: {
-      fontSize: 40,
+      fontSize: 44,
       lineHeight: 48,
-      fontWeight: "700" as const,
-      letterSpacing: -0.5,
+      letterSpacing: -1,
+      family: "serif" as const,
+      weight: 700,
     },
     medium: {
-      fontSize: 32,
+      fontSize: 34,
       lineHeight: 40,
-      fontWeight: "700" as const,
-      letterSpacing: -0.4,
+      letterSpacing: -0.8,
+      family: "serif" as const,
+      weight: 700,
     },
     small: {
-      fontSize: 28,
-      lineHeight: 36,
-      fontWeight: "700" as const,
-      letterSpacing: -0.3,
+      fontSize: 27,
+      lineHeight: 34,
+      letterSpacing: -0.5,
+      family: "serif" as const,
+      weight: 600,
     },
   },
   heading: {
     h1: {
       fontSize: 24,
       lineHeight: 30,
-      fontWeight: "700" as const,
       letterSpacing: -0.4,
+      family: "serif" as const,
+      weight: 600,
     },
     h2: {
       fontSize: 20,
       lineHeight: 26,
-      fontWeight: "600" as const,
       letterSpacing: -0.3,
+      family: "serif" as const,
+      weight: 600,
     },
     h3: {
       fontSize: 17,
-      lineHeight: 22,
-      fontWeight: "600" as const,
-      letterSpacing: -0.2,
+      lineHeight: 23,
+      letterSpacing: 0,
+      family: "sans" as const,
+      weight: 700,
     },
     h4: {
       fontSize: 15,
       lineHeight: 20,
-      fontWeight: "600" as const,
-      letterSpacing: -0.1,
+      letterSpacing: 0,
+      family: "sans" as const,
+      weight: 700,
     },
   },
   body: {
-    large: { fontSize: 17, lineHeight: 26, fontWeight: "400" as const },
-    default: { fontSize: 15, lineHeight: 22, fontWeight: "400" as const },
-    small: { fontSize: 13, lineHeight: 18, fontWeight: "400" as const },
+    large: {
+      fontSize: 17,
+      lineHeight: 26,
+      family: "sans" as const,
+      weight: 400,
+    },
+    default: {
+      fontSize: 15,
+      lineHeight: 22,
+      family: "sans" as const,
+      weight: 400,
+    },
+    small: {
+      fontSize: 13,
+      lineHeight: 19,
+      family: "sans" as const,
+      weight: 400,
+    },
   },
   label: {
     large: {
       fontSize: 15,
       lineHeight: 20,
-      fontWeight: "600" as const,
       letterSpacing: -0.1,
+      family: "sans" as const,
+      weight: 600,
     },
     medium: {
       fontSize: 13,
       lineHeight: 18,
-      fontWeight: "600" as const,
-      letterSpacing: 0,
+      family: "sans" as const,
+      weight: 600,
     },
     small: {
       fontSize: 11,
       lineHeight: 16,
-      fontWeight: "600" as const,
       letterSpacing: 0.2,
+      family: "sans" as const,
+      weight: 600,
     },
   },
   caption: {
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: "500" as const,
     letterSpacing: 0.1,
+    family: "sans" as const,
+    weight: 500,
   },
   overline: {
     fontSize: 11,
     lineHeight: 16,
-    fontWeight: "700" as const,
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
     textTransform: "uppercase" as const,
+    family: "sans" as const,
+    weight: 700,
   },
 } as const;
 
-// Soft, blurred elevation — navy-tinted so shadows feel part of the ink.
+// Editorial elevation — barely-there; hairline borders do the real work.
 const soft = (y: number, radius: number, opacity: number, elev: number) => ({
-  shadowColor: "#0B1526",
+  shadowColor: "#1A1712",
   shadowOffset: { width: 0, height: y },
   shadowOpacity: opacity,
   shadowRadius: radius,
@@ -246,11 +304,11 @@ const soft = (y: number, radius: number, opacity: number, elev: number) => ({
 
 export const shadows = {
   none: {},
-  xs: soft(1, 2, 0.05, 1),
-  sm: soft(2, 6, 0.07, 2),
-  md: soft(4, 12, 0.09, 4),
-  lg: soft(8, 22, 0.11, 8),
-  xl: soft(14, 34, 0.14, 14),
+  xs: soft(1, 1, 0.03, 1),
+  sm: soft(1, 2, 0.04, 2),
+  md: soft(2, 6, 0.05, 3),
+  lg: soft(4, 12, 0.07, 6),
+  xl: soft(8, 20, 0.09, 10),
 } as const;
 
 export const elevation = {
@@ -270,49 +328,51 @@ export const motion = {
   },
 } as const;
 
-/** Gradients — dark-first hero sweeps consumed by expo-linear-gradient. */
+/**
+ * "Gradients" — intentionally FLAT in this system (two near-identical stops) so
+ * every hero using expo-linear-gradient renders as a solid editorial panel, not
+ * a showy sweep. The AI-tell gradient look is designed out here, centrally.
+ */
 export const gradients = {
-  hero: ["#16263F", "#0F1B2F", "#0A121F"] as const, // midnight hero
-  teal: ["#F8B81E", "#F0A70A"] as const, // brand (amber) sweep — key kept for compat
-  brand: ["#F8B81E", "#F0A70A"] as const,
-  cobalt: ["#3B82F6", "#2563EB", "#1A4D9E"] as const,
-  light: ["#FFFFFF", "#F7F6F3"] as const,
-  mist: ["#FFF9EB", "#EDF1F6"] as const, // amber dawn → navy mist
+  hero: ["#211C15", "#1A1712"] as const, // flat ink panel
+  teal: ["#E19A10", "#E19A10"] as const, // flat marigold (compat key)
+  brand: ["#E19A10", "#E19A10"] as const,
+  cobalt: ["#26526F", "#26526F"] as const,
+  light: ["#FFFFFF", "#FFFFFF"] as const,
+  mist: ["#F7F3EC", "#F7F3EC"] as const,
 } as const;
 
-/** Glass — translucent frosted panels for overlays over the midnight hero. */
+/** Translucent chips for use on the rare ink panel (login/menu identity). */
 export const glass = {
   light: {
-    backgroundColor: "rgba(255,255,255,0.16)",
-    borderColor: "rgba(255,255,255,0.28)",
+    backgroundColor: "rgba(255,255,255,0.10)",
+    borderColor: "rgba(255,255,255,0.16)",
     borderWidth: 1,
   },
   lighter: {
-    backgroundColor: "rgba(255,255,255,0.10)",
-    borderColor: "rgba(255,255,255,0.18)",
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderColor: "rgba(255,255,255,0.12)",
     borderWidth: 1,
   },
   dark: {
-    backgroundColor: "rgba(11,21,38,0.30)",
-    borderColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "rgba(26,23,18,0.06)",
+    borderColor: "rgba(26,23,18,0.10)",
     borderWidth: 1,
   },
 } as const;
 
 /**
- * Category tints (2026 bento trend) — soft background + matching foreground for
- * tiles/chips, so metrics read at a glance by colour: navy = live/tracking,
- * blue = analytics, green = safe/paid, amber = attention/arriving, red =
- * problem, violet = journey/handover.
+ * Category tints — muted editorial swatches for status chips / stat tiles.
+ * "teal" is the live/brand slot (marigold), the rest are quiet supporting hues.
  */
 export const tints = {
-  neutral: { bg: "#F1EFEA", fg: "#4A5568", icon: "#667085", ring: "#E7E4DD" },
-  teal: { bg: "#EEF2F8", fg: "#1F3251", icon: "#33476B", ring: "#D9E0EA" }, // live/navy
-  blue: { bg: "#EFF6FF", fg: "#2563EB", icon: "#2563EB", ring: "#BFDBFE" },
-  green: { bg: "#ECFDF5", fg: "#047857", icon: "#059669", ring: "#A7F3D0" },
-  amber: { bg: "#FFF9EB", fg: "#B26B05", icon: "#D68806", ring: "#FDE38A" },
-  red: { bg: "#FEF2F2", fg: "#B91C1C", icon: "#DC2626", ring: "#FECACA" },
-  violet: { bg: "#F5F3FF", fg: "#6D28D9", icon: "#7C3AED", ring: "#DDD6FE" },
+  neutral: { bg: "#F0EBE1", fg: "#57503F", icon: "#8A8272", ring: "#E4DDCF" },
+  teal: { bg: "#FCEFCF", fg: "#9A650A", icon: "#C0820C", ring: "#F6C65E" }, // brand
+  blue: { bg: "#EAF2F6", fg: "#26526F", icon: "#356C8F", ring: "#CFE0EA" },
+  green: { bg: "#EDF4EC", fg: "#3D6B4A", icon: "#4E8A5E", ring: "#CBE0CD" },
+  amber: { bg: "#FBF1D9", fg: "#8A5A12", icon: "#C0820C", ring: "#F0DCA8" },
+  red: { bg: "#F9ECE7", fg: "#A23A22", icon: "#C24A2E", ring: "#EDCFC5" },
+  violet: { bg: "#F0ECF3", fg: "#5E4A72", icon: "#7A6293", ring: "#DBD0E4" },
 } as const;
 
 export type TintName = keyof typeof tints;
@@ -323,12 +383,10 @@ export type TintName = keyof typeof tints;
  */
 export const tripStatusMeta: Record<string, { tint: TintName; label: string }> =
   {
-    // trip
     not_started: { tint: "neutral", label: "Not started" },
     in_progress: { tint: "teal", label: "On the way" },
     completed: { tint: "green", label: "Completed" },
     cancelled: { tint: "red", label: "Cancelled" },
-    // stop
     pending: { tint: "neutral", label: "Waiting" },
     arrived: { tint: "amber", label: "Arriving" },
     picked_up: { tint: "teal", label: "On board" },
@@ -348,6 +406,5 @@ export const layout = {
   chipHeight: 36,
   chipRowHeight: 44,
   contentMaxWidth: 1200,
-  // Width at/above which the layout switches to the desktop sidebar shell.
   wideBreakpoint: 900,
 } as const;

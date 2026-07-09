@@ -1,7 +1,9 @@
-/** Text — all typography routes through here for a consistent type system. */
+/** Text — all typography routes through here. Resolves the Editorial Ledger
+ *  type system: each variant picks Fraunces (serif) or Inter (sans) at the
+ *  right weight; display/number variants use tabular "ledger" figures. */
 import React from "react";
 import { Text as RNText, TextStyle, StyleProp } from "react-native";
-import { typography, palette } from "../designSystem";
+import { typography, palette, resolveFont } from "../designSystem";
 
 type Variant =
   | "display-lg"
@@ -37,6 +39,8 @@ interface Props {
   tone?: Tone;
   weight?: "400" | "500" | "600" | "700";
   align?: "left" | "center" | "right";
+  /** Force tabular (monospaced) figures — for money, counts, times. */
+  numeric?: boolean;
   numberOfLines?: number;
   adjustsFontSizeToFit?: boolean;
   style?: StyleProp<TextStyle>;
@@ -61,6 +65,13 @@ const variantMap = {
   overline: typography.overline,
 } as const;
 
+// Display headlines are almost always numeric heroes → tabular by default.
+const TABULAR_VARIANTS = new Set<Variant>([
+  "display-lg",
+  "display-md",
+  "display-sm",
+]);
+
 const toneMap: Record<Tone, string> = {
   primary: palette.text.primary,
   secondary: palette.text.secondary,
@@ -79,20 +90,40 @@ export function Text({
   tone = "primary",
   weight,
   align,
+  numeric,
   numberOfLines,
   adjustsFontSizeToFit,
   style,
   children,
 }: Props) {
-  const base = variantMap[variant];
+  const base = variantMap[variant] as {
+    fontSize: number;
+    lineHeight: number;
+    letterSpacing?: number;
+    textTransform?: TextStyle["textTransform"];
+    family: "serif" | "sans";
+    weight: number;
+  };
+  // A caller `weight` prop overrides the variant's default weight, but the
+  // FAMILY (serif vs sans) stays fixed to the variant so headlines stay serif.
+  const effectiveWeight = weight ? Number(weight) : base.weight;
+  const fontFamily = resolveFont(base.family, effectiveWeight);
+  const tabular = numeric || TABULAR_VARIANTS.has(variant);
+
   return (
     <RNText
       numberOfLines={numberOfLines}
       adjustsFontSizeToFit={adjustsFontSizeToFit}
       style={[
-        base,
-        { color: toneMap[tone] },
-        weight ? { fontWeight: weight } : undefined,
+        {
+          fontSize: base.fontSize,
+          lineHeight: base.lineHeight,
+          letterSpacing: base.letterSpacing,
+          textTransform: base.textTransform,
+          fontFamily,
+          color: toneMap[tone],
+        },
+        tabular ? { fontVariant: ["tabular-nums"] } : undefined,
         align ? { textAlign: align } : undefined,
         style,
       ]}

@@ -2,10 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { vehicleApi } from "@modules/vehicle/api/vehicleApi";
 import { VehiclePayload } from "@modules/vehicle/types";
 
-export const useVehicles = (params?: {
-  search?: string;
-  enabled?: boolean;
-}) =>
+export const useVehicles = (params?: { search?: string; enabled?: boolean }) =>
   useQuery({
     queryKey: ["vehicles", params?.search ?? null],
     queryFn: () => vehicleApi.list({ search: params?.search }),

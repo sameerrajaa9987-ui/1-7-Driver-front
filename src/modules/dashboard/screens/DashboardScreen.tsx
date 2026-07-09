@@ -58,8 +58,7 @@ function countExpiringDocs(
     return (
       count +
       docs.filter(
-        (doc) =>
-          doc?.expiryDate && new Date(doc.expiryDate).getTime() < cutoff,
+        (doc) => doc?.expiryDate && new Date(doc.expiryDate).getTime() < cutoff,
       ).length
     );
   }, 0);
@@ -68,7 +67,7 @@ function countExpiringDocs(
 function isServiceDueSoon(nextServiceDue: string | null) {
   return Boolean(
     nextServiceDue &&
-      new Date(nextServiceDue).getTime() < Date.now() + 7 * 86_400_000,
+    new Date(nextServiceDue).getTime() < Date.now() + 7 * 86_400_000,
   );
 }
 

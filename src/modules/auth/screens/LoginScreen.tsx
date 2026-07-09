@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import { View, StyleSheet, Pressable, ScrollView } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { Bus, Mail, Lock, Phone, ShieldCheck } from "lucide-react-native";
+import { Mail, Lock, Phone, ShieldCheck } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Text, TextField, Button, VStack, HStack, HeroGlow } from "@shared/ui";
-import { palette, radius, shadows, gradients } from "@shared/designSystem";
+import { Text, TextField, Button, VStack, HStack, BrandLogo } from "@shared/ui";
+import { palette, radius, shadows } from "@shared/designSystem";
 import { apiErrorMessage } from "@api/apiClient";
 import {
   localMobileDigits,
@@ -25,31 +24,22 @@ export default function LoginScreen() {
   const [mode, setMode] = useState<Mode>("staff");
 
   return (
-    <LinearGradient
-      colors={[...gradients.hero] as [string, string, ...string[]]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ flex: 1 }}
-    >
-      <HeroGlow />
+    <View style={{ flex: 1, backgroundColor: palette.surface.secondary }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
-        {/* Brand — amber bus mark on midnight (bus-livery identity) */}
+        {/* Brand — real monoline mark on warm paper, editorial serif wordmark */}
         <View style={styles.brand}>
-          <View style={styles.logo}>
-            <Bus size={26} color={palette.ink[900]} strokeWidth={2.4} />
+          <View style={styles.logoTile}>
+            <BrandLogo size={46} tone="ink" />
           </View>
-          <Text variant="h1" align="center" style={{ color: "#FFFFFF" }}>
+          <Text variant="display-sm" align="center" tone="primary">
             SchoolRide Connect
           </Text>
-          <Text
-            variant="body-sm"
-            align="center"
-            style={{ color: "rgba(255,255,255,0.66)" }}
-          >
+          <View style={styles.rule} />
+          <Text variant="body" align="center" tone="tertiary">
             Safe students. Connected parents. Empowered drivers.
           </Text>
         </View>
@@ -75,7 +65,7 @@ export default function LoginScreen() {
           )}
         </View>
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -97,7 +87,7 @@ function Tab({
         variant="label"
         weight="600"
         style={{
-          color: active ? palette.ink[900] : palette.text.tertiary,
+          color: active ? palette.text.inverse : palette.text.tertiary,
         }}
       >
         {label}
@@ -264,26 +254,34 @@ const styles = StyleSheet.create({
   },
   brand: {
     alignItems: "center",
-    gap: 4,
-    marginBottom: 22,
+    gap: 8,
+    marginBottom: 26,
   },
-  logo: {
-    width: 60,
-    height: 60,
+  logoTile: {
+    width: 68,
+    height: 68,
     borderRadius: radius.lg,
     backgroundColor: palette.brand[500],
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 10,
-    ...shadows.lg,
+    marginBottom: 6,
+  },
+  // The marigold hairline under the wordmark — a small editorial signature.
+  rule: {
+    width: 34,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: palette.brand[500],
+    marginVertical: 2,
   },
   card: {
     width: "100%",
     maxWidth: 420,
     backgroundColor: palette.surface.primary,
-    borderRadius: radius["2xl"],
-    padding: 26,
-    ...shadows.xl,
+    borderRadius: radius.xl,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: palette.border.default,
   },
   tabs: {
     flexDirection: "row",
@@ -299,7 +297,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tabActive: {
-    backgroundColor: palette.brand[400],
-    ...shadows.xs,
+    backgroundColor: palette.ink[900],
   },
 });

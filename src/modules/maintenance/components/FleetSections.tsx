@@ -294,8 +294,7 @@ export function AnalyticsSection() {
                 variant="label-lg"
                 weight="700"
                 style={{
-                  color:
-                    v.marginThisMonth >= 0 ? tints.green.fg : tints.red.fg,
+                  color: v.marginThisMonth >= 0 ? tints.green.fg : tints.red.fg,
                 }}
               >
                 {v.marginThisMonth >= 0 ? "+" : ""}
