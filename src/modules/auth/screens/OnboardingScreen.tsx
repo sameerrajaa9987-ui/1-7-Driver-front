@@ -1,8 +1,8 @@
 /**
  * OnboardingScreen — the first-run intro (2026 best practice: 3 value-first
- * slides, benefits not how-to, a Skip for power users, shown once). Full
- * midnight canvas with glowing orbs, a swipeable carousel, amber dot pager,
- * and haptic page turns. "Get started" marks it seen and drops to Login.
+ * slides, benefits not how-to, a Skip for power users, shown once). Editorial
+ * ink canvas, a swipeable carousel, marigold dot pager, and haptic page turns.
+ * "Get started" marks it seen and drops to Login.
  */
 import React, { useRef, useState } from "react";
 import {
@@ -15,7 +15,6 @@ import {
   type NativeSyntheticEvent,
   type NativeScrollEvent,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import {
@@ -27,7 +26,7 @@ import {
 } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useOnboardingStore } from "@shared/store/useOnboardingStore";
-import { palette, radius, gradients, glass } from "@shared/designSystem";
+import { palette, radius } from "@shared/designSystem";
 import { Text, VStack, Button, BrandLogo } from "@shared/ui";
 
 interface Slide {
@@ -91,12 +90,7 @@ export default function OnboardingScreen() {
   const isLast = index === SLIDES.length - 1;
 
   return (
-    <LinearGradient
-      colors={[...gradients.hero] as [string, string, ...string[]]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ flex: 1 }}
-    >
+    <View style={{ flex: 1, backgroundColor: palette.surface.dark }}>
       <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
         {/* Brand + Skip */}
         <View style={styles.topBar}>
@@ -162,7 +156,7 @@ export default function OnboardingScreen() {
           />
         </View>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -170,7 +164,7 @@ function SlideView({ slide, width }: { slide: Slide; width: number }) {
   const Icon = slide.icon;
   return (
     <View style={[styles.slide, { width }]}>
-      <View style={[styles.iconTile, glass.light]}>
+      <View style={styles.iconTile}>
         <Icon size={40} color={palette.brand[400]} strokeWidth={1.9} />
       </View>
       <VStack gap={12} style={{ marginTop: 36 }}>
@@ -217,6 +211,9 @@ const styles = StyleSheet.create({
     borderRadius: radius["2xl"],
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
   },
   dots: {
     flexDirection: "row",

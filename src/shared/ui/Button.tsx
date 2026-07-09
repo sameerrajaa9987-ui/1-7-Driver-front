@@ -1,8 +1,7 @@
 /**
- * Button — Midnight Transit: solid fill, soft elevation, large rounded
- * corners, subtle scale-press. Variants: primary (midnight navy), accent
- * (bus-amber with ink text — like a bus livery), secondary (hairline
- * outline), ghost, destructive.
+ * Button — Editorial Ledger: flat solid fill, hairline where needed, tight
+ * corners, subtle scale-press. Variants: primary (ink), accent (marigold with
+ * ink text — a bus-livery), secondary (hairline outline), ghost, destructive.
  */
 import React from "react";
 import {
