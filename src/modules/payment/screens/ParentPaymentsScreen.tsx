@@ -1,5 +1,10 @@
+/**
+ * ParentPaymentsScreen — client-kit Fees screen: Paid (green) / Pending
+ * (orange) summary cards, a "This Month Fee" card per child with Due Date and
+ * a violet Pay Now button, then Recent Transactions as icon-tile rows.
+ */
 import React, { useState } from "react";
-import { View } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import {
   ReceiptIndianRupee,
@@ -7,6 +12,8 @@ import {
   Clock,
   CreditCard,
   CheckCircle2,
+  XCircle,
+  CalendarDays,
 } from "lucide-react-native";
 import { apiClient, apiErrorMessage } from "@api/apiClient";
 import {
@@ -16,7 +23,7 @@ import {
   useConfirmTestPayment,
 } from "@modules/payment/hooks/usePayments";
 import { Payment, PaymentStatus } from "@modules/payment/types";
-import { palette, tints } from "@shared/designSystem";
+import { palette, radius, tints, accentFor } from "@shared/designSystem";
 import {
   Screen,
   Text,
@@ -24,9 +31,7 @@ import {
   HStack,
   Card,
   Button,
-  StatTile,
   StatusChip,
-  GradientHero,
   EmptyState,
 } from "@shared/ui";
 
@@ -45,6 +50,13 @@ function monthName(ym: string): string {
   return new Date(y, m - 1, 1).toLocaleString("en-US", { month: "long" });
 }
 
+/** Due date like "5 Aug" from the student's due day-of-month. */
+function dueLabel(day: number, ym: string): string {
+  const [y, m] = ym.split("-").map(Number);
+  const d = new Date(y, (m || 1) - 1, Math.max(1, day || 5));
+  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+}
+
 const STATUS_TONE: Record<PaymentStatus, "warning" | "success" | "danger"> = {
   pending: "warning",
   verified: "success",
@@ -52,14 +64,16 @@ const STATUS_TONE: Record<PaymentStatus, "warning" | "success" | "danger"> = {
 };
 
 const STATUS_LABEL: Record<PaymentStatus, string> = {
-  pending: "Awaiting verification",
-  verified: "Verified",
+  pending: "Pending",
+  verified: "Paid",
   rejected: "Rejected",
 };
 
 interface StudentLite {
   id: string;
   name: string;
+  monthlyFee?: number;
+  dueDate?: number;
 }
 
 /** The parent's own children (the API scopes /students to the parent). */
@@ -77,6 +91,7 @@ function useMyChildren() {
 }
 
 export default function ParentPaymentsScreen() {
+  const accent = accentFor("parent");
   const { data, isLoading, refetch, isRefetching } = usePayments({ limit: 50 });
   const { data: children } = useMyChildren();
   const payments = data?.data ?? [];
@@ -90,68 +105,51 @@ export default function ParentPaymentsScreen() {
 
   return (
     <Screen
-      overline="Fees"
-      title="Payments"
-      subtitle="Your child's transport fee history"
+      title="Fees & Payments"
       refreshing={isRefetching}
       onRefresh={refetch}
     >
-      <GradientHero variant="cobalt">
-        <VStack gap={8}>
-          <StatusChip label="Online payment · Razorpay" tone="info" />
-          <HStack gap={10} align="center">
-            <CreditCard size={22} color="#FFFFFF" strokeWidth={2} />
-            <Text variant="h3" tone="inverse">
-              Pay online via Razorpay
-            </Text>
-          </HStack>
-          <Text variant="body-sm" style={{ color: "rgba(255,255,255,0.86)" }}>
-            Pay this month&apos;s transport fee in one tap. Your receipt appears
-            below the moment the payment is confirmed.
+      {/* Paid / Pending summary — soft green + orange cards per the kit */}
+      <HStack gap={12}>
+        <View style={[styles.summary, { backgroundColor: tints.green.bg }]}>
+          <View style={[styles.summaryIcon, { backgroundColor: "#FFFFFF" }]}>
+            <ShieldCheck size={16} color={tints.green.icon} strokeWidth={2.1} />
+          </View>
+          <Text variant="h3" style={{ color: tints.green.fg, marginTop: 10 }}>
+            {money(paid)}
           </Text>
-        </VStack>
-      </GradientHero>
+          <Text variant="body-sm" style={{ color: tints.green.fg }}>
+            Paid
+          </Text>
+        </View>
+        <View style={[styles.summary, { backgroundColor: tints.amber.bg }]}>
+          <View style={[styles.summaryIcon, { backgroundColor: "#FFFFFF" }]}>
+            <Clock size={16} color={tints.amber.icon} strokeWidth={2.1} />
+          </View>
+          <Text variant="h3" style={{ color: tints.amber.fg, marginTop: 10 }}>
+            {money(pending)}
+          </Text>
+          <Text variant="body-sm" style={{ color: tints.amber.fg }}>
+            Pending
+          </Text>
+        </View>
+      </HStack>
 
+      {/* This-month fee card per child, violet Pay Now */}
       {(children ?? []).length > 0 ? (
-        <VStack gap={12} style={{ marginTop: 20 }}>
+        <VStack gap={12} style={{ marginTop: 16 }}>
           {(children ?? []).map((c) => (
-            <PayOnlineCard key={c.id} studentId={c.id} childName={c.name} />
+            <PayOnlineCard key={c.id} child={c} accent={accent} />
           ))}
         </VStack>
       ) : null}
 
-      <View
-        style={{
-          flexDirection: "row",
-          flexWrap: "wrap",
-          marginTop: 20,
-          marginHorizontal: -6,
-        }}
-      >
-        <View style={{ width: "50%", padding: 6 }}>
-          <StatTile
-            label="Paid (verified)"
-            value={money(paid)}
-            icon={ShieldCheck}
-            tone="teal"
-          />
-        </View>
-        <View style={{ width: "50%", padding: 6 }}>
-          <StatTile
-            label="Pending"
-            value={money(pending)}
-            icon={Clock}
-            tone="light"
-          />
-        </View>
-      </View>
-
       <Text
         variant="h3"
         tone="primary"
-        style={{ marginTop: 28, marginBottom: 12 }}
+        style={{ marginTop: 24, marginBottom: 12 }}
       >
-        Payment history
+        Recent Transactions
       </Text>
       {payments.length === 0 ? (
         <EmptyState
@@ -160,9 +158,9 @@ export default function ParentPaymentsScreen() {
           message="Your fee payments and receipts will appear here."
         />
       ) : (
-        <VStack gap={12}>
+        <VStack gap={10}>
           {payments.map((p) => (
-            <ParentPaymentCard key={p.id} payment={p} />
+            <TransactionRow key={p.id} payment={p} />
           ))}
         </VStack>
       )}
@@ -171,14 +169,14 @@ export default function ParentPaymentsScreen() {
 }
 
 function PayOnlineCard({
-  studentId,
-  childName,
+  child,
+  accent,
 }: {
-  studentId: string;
-  childName: string;
+  child: StudentLite;
+  accent: ReturnType<typeof accentFor>;
 }) {
   const forMonth = currentMonth();
-  const { data: preview } = useProrationPreview(studentId, forMonth);
+  const { data: preview } = useProrationPreview(child.id, forMonth);
   const createOrder = useCreateOnlineOrder();
   const confirmTest = useConfirmTestPayment();
   const [receipt, setReceipt] = useState<string | null>(null);
@@ -189,7 +187,7 @@ function PayOnlineCard({
   const pay = () => {
     setError(null);
     createOrder.mutate(
-      { studentId, forMonth },
+      { studentId: child.id, forMonth },
       {
         onSuccess: (order) => {
           // In dev testMode is true (no real Razorpay keys), so we confirm the
@@ -234,37 +232,38 @@ function PayOnlineCard({
             </Text>
           </HStack>
           <Text variant="body-sm" style={{ color: tints.green.fg }}>
-            {childName}&apos;s fee for {monthName(forMonth)} is paid via
-            Razorpay.
-          </Text>
-          <Text variant="body-sm" style={{ color: tints.green.fg }}>
-            Receipt {receipt}
+            {child.name}&apos;s fee for {monthName(forMonth)} is paid via
+            Razorpay · Receipt {receipt}
           </Text>
         </VStack>
       </Card>
     );
   }
 
-  const amount = preview?.amount;
+  const amount = preview?.amount ?? child.monthlyFee;
 
   return (
     <Card>
       <VStack gap={12}>
         <HStack align="center" justify="space-between">
           <VStack gap={2} flex={1}>
-            <Text variant="label-lg" tone="primary" numberOfLines={1}>
-              {childName}
-            </Text>
             <Text variant="body-sm" tone="tertiary">
-              {monthName(forMonth)} transport fee
-              {preview?.prorated ? " · prorated" : ""}
+              This Month Fee · {child.name}
+            </Text>
+            <Text variant="h2" tone="primary">
+              {amount != null ? money(amount) : "—"}
             </Text>
           </VStack>
-          {amount != null ? (
-            <Text variant="h3" tone="primary">
-              {money(amount)}
+          <HStack gap={6} align="center">
+            <CalendarDays
+              size={14}
+              color={palette.text.tertiary}
+              strokeWidth={2}
+            />
+            <Text variant="body-sm" tone="tertiary">
+              Due {dueLabel(child.dueDate ?? 5, forMonth)}
             </Text>
-          ) : null}
+          </HStack>
         </HStack>
         {error ? (
           <Text variant="body-sm" tone="danger">
@@ -272,11 +271,8 @@ function PayOnlineCard({
           </Text>
         ) : null}
         <Button
-          label={
-            amount != null
-              ? `Pay ${money(amount)} for ${monthName(forMonth)}`
-              : "Pay this month online"
-          }
+          label="Pay Now"
+          tint={accent.main}
           icon={<CreditCard size={16} color="#FFFFFF" strokeWidth={2} />}
           loading={busy}
           onPress={pay}
@@ -289,42 +285,69 @@ function PayOnlineCard({
   );
 }
 
-function ParentPaymentCard({ payment }: { payment: Payment }) {
+function TransactionRow({ payment }: { payment: Payment }) {
+  const t =
+    payment.status === "verified"
+      ? tints.green
+      : payment.status === "pending"
+        ? tints.amber
+        : tints.red;
+  const Icon =
+    payment.status === "verified"
+      ? CheckCircle2
+      : payment.status === "pending"
+        ? Clock
+        : XCircle;
+
   return (
     <Card>
-      <VStack gap={10}>
-        <HStack align="center" justify="space-between">
-          <VStack gap={3} flex={1}>
-            <Text variant="h3" tone="primary">
-              {money(payment.amount)}
-            </Text>
-            <Text variant="body-sm" tone="tertiary">
-              {payment.mode === "cash"
-                ? "Cash"
-                : payment.mode === "online"
-                  ? "Online · Razorpay"
-                  : "Transfer"}
-              {payment.forMonth ? ` · ${payment.forMonth}` : ""}
-            </Text>
-          </VStack>
-          <StatusChip
-            label={STATUS_LABEL[payment.status]}
-            tone={STATUS_TONE[payment.status]}
-          />
-        </HStack>
-        {payment.status === "verified" && payment.receiptNumber ? (
-          <HStack gap={6} align="center">
-            <ReceiptIndianRupee
-              size={14}
-              color={palette.text.tertiary}
-              strokeWidth={1.9}
-            />
-            <Text variant="body-sm" tone="secondary">
-              Receipt {payment.receiptNumber}
-            </Text>
-          </HStack>
-        ) : null}
-      </VStack>
+      <HStack gap={12} align="center">
+        <View style={[styles.txIcon, { backgroundColor: t.bg }]}>
+          <Icon size={17} color={t.icon} strokeWidth={2.1} />
+        </View>
+        <VStack gap={2} flex={1}>
+          <Text variant="label-lg" tone="primary">
+            {money(payment.amount)}
+          </Text>
+          <Text variant="body-sm" tone="tertiary" numberOfLines={1}>
+            {payment.mode === "cash"
+              ? "Cash"
+              : payment.mode === "online"
+                ? "Online · Razorpay"
+                : "Transfer"}
+            {payment.forMonth ? ` · ${monthName(payment.forMonth)}` : ""}
+            {payment.status === "verified" && payment.receiptNumber
+              ? ` · ${payment.receiptNumber}`
+              : ""}
+          </Text>
+        </VStack>
+        <StatusChip
+          label={STATUS_LABEL[payment.status]}
+          tone={STATUS_TONE[payment.status]}
+        />
+      </HStack>
     </Card>
   );
 }
+
+const styles = StyleSheet.create({
+  summary: {
+    flex: 1,
+    borderRadius: radius.lg,
+    padding: 14,
+  },
+  summaryIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: radius.sm,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  txIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

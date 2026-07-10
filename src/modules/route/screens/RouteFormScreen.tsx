@@ -270,11 +270,8 @@ export default function RouteFormScreen() {
             ) : null}
             <Button
               label="Optimise stop order"
-              variant="accent"
               loading={optimizeMut.isPending}
-              icon={
-                <Sparkles size={16} color={palette.ink[900]} strokeWidth={2} />
-              }
+              icon={<Sparkles size={16} color="#FFFFFF" strokeWidth={2} />}
               onPress={() => optimizeMut.mutate(undefined)}
             />
           </VStack>
@@ -321,7 +318,6 @@ export default function RouteFormScreen() {
             )}
             <Button
               label="Assign substitute"
-              variant="accent"
               disabled={!subDriverId}
               loading={substituteMut.isPending}
               onPress={() =>

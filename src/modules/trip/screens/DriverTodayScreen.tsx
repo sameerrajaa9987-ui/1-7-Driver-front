@@ -121,10 +121,7 @@ export default function DriverTodayScreen() {
             <View style={{ flex: 1 }}>
               <Button
                 label="Start Pickup"
-                variant="accent"
-                icon={
-                  <Play size={16} color={palette.ink[900]} strokeWidth={2.4} />
-                }
+                icon={<Play size={16} color="#FFFFFF" strokeWidth={2.4} />}
                 loading={startTrip.isPending}
                 disabled={!routeId}
                 onPress={() => start("pickup")}
@@ -133,7 +130,14 @@ export default function DriverTodayScreen() {
             <View style={{ flex: 1 }}>
               <Button
                 label="Start Drop"
-                icon={<Play size={16} color="#FFFFFF" strokeWidth={2.4} />}
+                variant="secondary"
+                icon={
+                  <Play
+                    size={16}
+                    color={palette.text.primary}
+                    strokeWidth={2.4}
+                  />
+                }
                 loading={startTrip.isPending}
                 disabled={!routeId}
                 onPress={() => start("drop")}

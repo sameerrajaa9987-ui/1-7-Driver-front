@@ -54,6 +54,7 @@ export interface Student {
 
 export interface StudentPayload {
   name: string;
+  photo?: string;
   mobile?: string;
   gender?: string;
   dob?: string;

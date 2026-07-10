@@ -19,3 +19,7 @@ npm-debug.*
 # Build artifacts
 *.aab
 *.apk
+
+# Internal audit / review screenshots
+/audishot/
+../audishot/

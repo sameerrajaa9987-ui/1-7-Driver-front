@@ -1,15 +1,25 @@
 import React, { useEffect, useState } from "react";
-import { View } from "react-native";
+import { View, Image, Pressable, StyleSheet } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { User, Phone, School, MapPin, Users } from "lucide-react-native";
+import * as ImagePicker from "expo-image-picker";
+import {
+  User,
+  Phone,
+  School,
+  MapPin,
+  Users,
+  Camera,
+} from "lucide-react-native";
 import {
   useStudent,
   useCreateStudent,
   useUpdateStudent,
 } from "@modules/student/hooks/useStudents";
 import { StudentPayload } from "@modules/student/types";
-import { apiErrorMessage } from "@api/apiClient";
-import { palette, radius } from "@shared/designSystem";
+import { apiErrorMessage, uploadImage } from "@api/apiClient";
+import { mediaUrl } from "@shared/media";
+import { palette, radius, accentFor } from "@shared/designSystem";
+import { useAuthStore } from "@shared/store/useAuthStore";
 import {
   Screen,
   Text,
@@ -19,6 +29,7 @@ import {
   Button,
   TextField,
 } from "@shared/ui";
+import { placeholderPortrait } from "@shared/ui/Avatar";
 
 export default function StudentFormScreen() {
   const navigation = useNavigation<any>();
@@ -30,6 +41,39 @@ export default function StudentFormScreen() {
   const createMut = useCreateStudent();
   const updateMut = useUpdateStudent(id || "");
   const mut = editing ? updateMut : createMut;
+  const role = useAuthStore((s) => s.user?.role);
+  const accent = accentFor(role);
+
+  // Child photo — starts as the default mockup portrait; parents can upload
+  // their own from the gallery (stored via POST /media/upload).
+  const [photo, setPhoto] = useState<string>("");
+  const [photoErr, setPhotoErr] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const pickPhoto = async () => {
+    setPhotoErr(null);
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      setPhotoErr("Photo library permission was denied.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (result.canceled || !result.assets?.[0]?.uri) return;
+    try {
+      setUploading(true);
+      const url = await uploadImage(result.assets[0].uri);
+      setPhoto(url);
+    } catch (e) {
+      setPhotoErr(apiErrorMessage(e, "Could not upload the photo."));
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const [f, setF] = useState({
     name: "",
@@ -50,6 +94,7 @@ export default function StudentFormScreen() {
   });
 
   useEffect(() => {
+    if (student) setPhoto(student.photo || "");
     if (student)
       setF({
         name: student.name,
@@ -94,6 +139,7 @@ export default function StudentFormScreen() {
       motherName: f.motherName.trim() || undefined,
       alternateNumber: f.alternateNumber.trim() || undefined,
       whatsappNumber: f.whatsappNumber.trim() || undefined,
+      photo: photo || undefined,
       pickupPoint,
     };
 
@@ -106,8 +152,16 @@ export default function StudentFormScreen() {
 
   return (
     <Screen
-      overline="Students"
-      title={editing ? "Edit student" : "Add student"}
+      overline={role === "parent" ? "Children" : "Students"}
+      title={
+        role === "parent"
+          ? editing
+            ? "Edit Child"
+            : "Add Child"
+          : editing
+            ? "Edit student"
+            : "Add student"
+      }
       onBack={() => navigation.goBack()}
     >
       {mut.isError && (
@@ -117,6 +171,51 @@ export default function StudentFormScreen() {
           </Text>
         </View>
       )}
+
+      {/* Child photo — default mockup portrait until a photo is uploaded */}
+      <Card style={{ marginBottom: 16 }}>
+        <HStack gap={16} align="center">
+          <View>
+            <Image
+              source={{
+                uri: photo
+                  ? mediaUrl(photo)
+                  : placeholderPortrait(id || f.name || "new-child"),
+              }}
+              style={photoStyles.preview}
+            />
+            <Pressable
+              onPress={pickPhoto}
+              style={[photoStyles.badge, { backgroundColor: accent.main }]}
+            >
+              <Camera size={13} color="#FFFFFF" strokeWidth={2.2} />
+            </Pressable>
+          </View>
+          <VStack gap={6} flex={1}>
+            <Text variant="label-lg" tone="primary">
+              Child photo
+            </Text>
+            <Text variant="body-sm" tone="tertiary">
+              {photo
+                ? "Photo uploaded — tap Upload to change it."
+                : "Using the default picture. Upload your child's photo."}
+            </Text>
+            {photoErr ? (
+              <Text variant="body-sm" tone="danger">
+                {photoErr}
+              </Text>
+            ) : null}
+            <Button
+              label={uploading ? "Uploading…" : "Upload Photo"}
+              variant="secondary"
+              size="sm"
+              fullWidth={false}
+              loading={uploading}
+              onPress={pickPhoto}
+            />
+          </VStack>
+        </HStack>
+      </Card>
 
       <Card style={{ marginBottom: 16 }}>
         <VStack gap={16}>
@@ -273,6 +372,27 @@ export default function StudentFormScreen() {
     </Screen>
   );
 }
+
+const photoStyles = StyleSheet.create({
+  preview: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: palette.ink[100],
+  },
+  badge: {
+    position: "absolute",
+    right: -2,
+    bottom: -2,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+});
 
 const errorBox = {
   padding: 14,

@@ -37,6 +37,8 @@ interface Props {
   rightIcon?: React.ReactNode;
   fullWidth?: boolean;
   style?: ViewStyle;
+  /** Role-accent override — solid fill in this colour with white text. */
+  tint?: string;
 }
 
 const SIZES = {
@@ -55,11 +57,15 @@ export function Button({
   icon,
   rightIcon,
   fullWidth = true,
+  tint,
   style,
 }: Props) {
   const press = useSharedValue(0);
   const isDisabled = disabled || loading;
-  const c = getVariantColors(variant);
+  const base_c = getVariantColors(variant);
+  const c = tint
+    ? { bg: tint, text: "#FFFFFF", border: tint, borderWidth: 0 }
+    : base_c;
   const s = SIZES[size];
   const flat = variant === "ghost";
 
@@ -119,18 +125,13 @@ export function Button({
 
 function getVariantColors(v: Variant) {
   switch (v) {
+    // Primary AND accent are the SAME solid indigo — one CTA treatment app-wide.
     case "primary":
-      return {
-        bg: palette.ink[900],
-        text: "#FFFFFF",
-        border: palette.ink[900],
-        borderWidth: 0,
-      };
     case "accent":
       return {
-        bg: palette.brand[500],
-        text: palette.ink[900],
-        border: palette.brand[500],
+        bg: palette.brand[600],
+        text: "#FFFFFF",
+        border: palette.brand[600],
         borderWidth: 0,
       };
     case "secondary":

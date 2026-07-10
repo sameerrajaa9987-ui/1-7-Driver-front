@@ -7,11 +7,6 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 import {
   useFonts,
-  Fraunces_600SemiBold,
-  Fraunces_700Bold,
-  Fraunces_900Black,
-} from "@expo-google-fonts/fraunces";
-import {
   Inter_400Regular,
   Inter_500Medium,
   Inter_600SemiBold,
@@ -28,11 +23,8 @@ const queryClient = new QueryClient({
 });
 
 export default function App() {
-  // Editorial type system: Fraunces (serif display) + Inter (sans UI/body).
+  // Client kit typeface — Inter across the app.
   const [fontsLoaded] = useFonts({
-    Fraunces_600SemiBold,
-    Fraunces_700Bold,
-    Fraunces_900Black,
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,

@@ -1,24 +1,30 @@
 /**
- * SchoolRide Connect — "Editorial Ledger" (2026 design system).
+ * SchoolRide Connect — 2026 design system ("Clean SaaS"), ONE consistent
+ * identity across every role.
  *
- * A deliberately human, non-generic identity that reads as *designed*, not
- * AI-generated: warm paper surfaces, near-black warm ink, and ONE disciplined
- * marigold accent (school-bus livery, used only as solid blocks / underlines
- * — never gradients or glow). Typography is the hero — Fraunces (editorial
- * serif) for headlines and big numerals, Inter (clean grotesque) for UI, with
- * tabular "ledger" figures for money and counts. Flat surfaces, hairline
- * borders, restraint over decoration.
+ * Senior-dev principle (grounded in 2026 UI/UX practice): a product feels
+ * trustworthy when it uses ONE accent, applied to ~10% of the UI (primary
+ * buttons, active tabs, links, key icons) over a 60/30 neutral base. More than
+ * one brand accent reads as inconsistent — the "made in ChatGPT" tell.
  *
- * Token KEYS are stable across re-skins so the whole kit re-themes centrally;
- * `palette.brand` is the accent ramp, `palette.teal` is a compatibility alias.
+ * - Accent: a single INDIGO (#4F46E5) for the whole app, every role.
+ * - Neutral: cool slate ink on a #F5F6FA canvas with white cards.
+ * - Functional colour only: green = paid/done, amber = pending/arriving,
+ *   red = danger/SOS. These are semantics, not brand, so they stay.
+ * - Type: Inter only, one shared scale. Spacing/radius/shadow: one token set.
+ *
+ * `accentFor(role)` intentionally returns the SAME indigo for every role — the
+ * role argument is kept only so call-sites need not change. `palette.brand`,
+ * `palette.teal`, `palette.cobalt` are all aliases of the one indigo ramp.
  */
 
 // ---- fonts -----------------------------------------------------------------
 export const fonts = {
+  // "serif" kept as a compatibility slot — resolves to Inter bold cuts.
   serif: {
-    600: "Fraunces_600SemiBold",
-    700: "Fraunces_700Bold",
-    900: "Fraunces_900Black",
+    600: "Inter_600SemiBold",
+    700: "Inter_700Bold",
+    900: "Inter_700Bold",
   },
   sans: {
     400: "Inter_400Regular",
@@ -40,101 +46,109 @@ export function resolveFont(family: FamilyName, weight: number): string {
   return table[pick as keyof typeof table];
 }
 
-// Accent ramp — marigold (warm saffron school-bus yellow, deepened for UI).
-const marigold = {
-  900: "#5E3D06",
-  800: "#7A4F08",
-  700: "#9A650A",
-  600: "#C0820C",
-  500: "#E19A10", // primary accent
-  400: "#F0AE2E",
-  300: "#F6C65E",
-  200: "#FADFA0",
-  100: "#FCEFCF",
-  50: "#FDF8EC",
+// ---- the single brand accent — indigo, every role --------------------------
+/** The one accent used app-wide (primary buttons, active tab, links, icons). */
+export const brandAccent = {
+  main: "#4F46E5",
+  dark: "#4338CA",
+  soft: "#EEF2FF",
+  on: "#FFFFFF",
+} as const;
+
+// Kept keyed by role for backward-compat, but every role maps to the SAME
+// indigo — the design is consistent, not role-based.
+export const roleAccent = {
+  admin: brandAccent,
+  driver: brandAccent,
+  parent: brandAccent,
+  school: brandAccent,
+} as const;
+export type RoleAccentName = keyof typeof roleAccent;
+/** Always the single indigo accent — the `role` arg is ignored on purpose. */
+export const accentFor = (_role?: string | null) => brandAccent;
+
+// App accent ramp — one indigo, used everywhere via brand/teal/cobalt aliases.
+const indigo = {
+  900: "#312E81",
+  800: "#3730A3",
+  700: "#4338CA",
+  600: "#4F46E5",
+  500: "#6366F1",
+  400: "#818CF8",
+  300: "#A5B4FC",
+  200: "#C7D2FE",
+  100: "#E0E7FF",
+  50: "#EEF2FF",
 } as const;
 
 export const palette = {
-  // Primary ink — warm near-black charcoal (not blue; warmth reads human).
+  // Ink — cool slate (the client kit is cool-toned).
   ink: {
-    900: "#1A1712",
-    800: "#2A251D",
-    700: "#3D362B",
-    600: "#57503F",
-    500: "#736A57",
-    400: "#9A9080",
-    300: "#C2B9A8",
-    200: "#DED6C6",
-    100: "#EDE7DB",
-    50: "#F6F2EA",
+    900: "#101828",
+    800: "#1D2939",
+    700: "#344054",
+    600: "#475467",
+    500: "#667085",
+    400: "#98A2B3",
+    300: "#D0D5DD",
+    200: "#E4E7EC",
+    100: "#F2F4F7",
+    50: "#F9FAFB",
   },
 
-  // Accent — marigold (brand slot + compatibility alias)
-  teal: marigold,
-  brand: marigold,
+  teal: indigo, // compatibility alias → the one indigo accent
+  brand: indigo,
 
-  // A single quiet secondary — ink blue, only for links/info (never decoration)
-  cobalt: {
-    900: "#132A3A",
-    800: "#1C3D53",
-    700: "#26526F",
-    600: "#356C8F",
-    500: "#4A86AB",
-    400: "#72A6C4",
-    300: "#A0C6DC",
-    200: "#C8DEEC",
-    100: "#E4F0F6",
-    50: "#F2F8FB",
-  },
+  cobalt: indigo,
 
   neutral: {
     0: "#FFFFFF",
-    50: "#F6F2EA",
-    100: "#EDE7DB",
-    200: "#DED6C6",
-    300: "#C2B9A8",
-    400: "#9A9080",
-    500: "#736A57",
-    600: "#57503F",
-    700: "#3D362B",
-    800: "#2A251D",
-    900: "#1A1712",
+    50: "#F9FAFB",
+    100: "#F2F4F7",
+    200: "#E4E7EC",
+    300: "#D0D5DD",
+    400: "#98A2B3",
+    500: "#667085",
+    600: "#475467",
+    700: "#344054",
+    800: "#1D2939",
+    900: "#101828",
   },
 
-  // Warm paper surfaces — the editorial ledger feel.
+  // Light SaaS surfaces.
   surface: {
     primary: "#FFFFFF", // cards
-    secondary: "#F7F3EC", // app background (warm paper)
-    tertiary: "#F0EBE1",
+    secondary: "#F5F6FA", // app background
+    tertiary: "#F2F4F7",
     raised: "#FFFFFF",
-    sunken: "#EBE5D9",
-    dark: "#1A1712", // the rare ink panel
-    darkRaised: "#2A251D",
+    sunken: "#EEF0F5",
+    dark: "#1E2B4D", // the navy welcome banner
+    darkRaised: "#26355E",
   },
 
   text: {
-    primary: "#1A1712",
-    secondary: "#57503F",
-    tertiary: "#8A8272",
-    disabled: "#B4AC9C",
-    inverse: "#FBF8F2",
-    accent: "#9A650A",
-    link: "#26526F",
+    primary: "#101828",
+    secondary: "#344054",
+    tertiary: "#667085",
+    disabled: "#98A2B3",
+    inverse: "#FFFFFF",
+    accent: "#4F46E5",
+    link: "#4F46E5",
   },
 
   border: {
-    subtle: "#EFEADF",
-    default: "#E4DDCF",
-    strong: "#D3CABA",
-    focus: "#E19A10",
-    dark: "#3D362B",
+    subtle: "#F2F4F7",
+    default: "#E8EAF0",
+    strong: "#D0D5DD",
+    focus: "#4F46E5",
+    dark: "#344054",
   },
 
-  // Semantic — muted, editorial (desaturated, not neon).
-  success: { bg: "#EDF4EC", text: "#3D6B4A", border: "#CBE0CD" },
-  warning: { bg: "#FBF1D9", text: "#8A5A12", border: "#F0DCA8" },
-  danger: { bg: "#F9ECE7", text: "#A23A22", border: "#EDCFC5" },
-  info: { bg: "#EAF2F6", text: "#26526F", border: "#CFE0EA" },
+  // Semantic — bright, soft SaaS chips (per the client kit).
+  success: { bg: "#E8F7EE", text: "#12805C", border: "#B7E4C7" },
+  warning: { bg: "#FEF4E6", text: "#B54708", border: "#FBDFB1" },
+  danger: { bg: "#FEECEB", text: "#B42318", border: "#F7C6C2" },
+  info: { bg: "#EEF2FF", text: "#4338CA", border: "#C7D2FE" },
 } as const;
 
 export const spacing = {
@@ -160,96 +174,92 @@ export const spacing = {
   "20": 80,
 } as const;
 
-// Editorial corners — tighter, more considered (not pill-everything).
+// Soft rounded corners per the client kit (~cards 14–16).
 export const radius = {
-  xs: 4,
-  sm: 6,
-  md: 10,
-  lg: 14,
-  xl: 18,
-  "2xl": 22,
-  "3xl": 26,
+  xs: 6,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  "2xl": 24,
+  "3xl": 28,
   full: 9999,
 } as const;
 
-// Hairline outline — the primary separation device (borders over shadows).
-export const outline = { width: 1, color: "#E4DDCF" } as const;
+export const outline = { width: 1, color: "#E8EAF0" } as const;
 
 /**
- * Typography — every variant declares its `family` (serif = Fraunces editorial,
- * sans = Inter UI) and default `weight`; `Text` resolves the exact font. Serif
- * carries the headlines and big numerals; sans carries everything functional.
+ * Typography — clean Inter throughout (client kit). Every variant declares a
+ * `family` + `weight`; `Text` resolves the exact bundled cut.
  */
 export const typography = {
   display: {
     large: {
-      fontSize: 44,
-      lineHeight: 48,
-      letterSpacing: -1,
-      family: "serif" as const,
+      fontSize: 32,
+      lineHeight: 38,
+      letterSpacing: -0.6,
+      family: "sans" as const,
       weight: 700,
     },
     medium: {
-      fontSize: 34,
-      lineHeight: 40,
-      letterSpacing: -0.8,
-      family: "serif" as const,
+      fontSize: 26,
+      lineHeight: 32,
+      letterSpacing: -0.4,
+      family: "sans" as const,
       weight: 700,
     },
     small: {
-      fontSize: 27,
-      lineHeight: 34,
-      letterSpacing: -0.5,
-      family: "serif" as const,
-      weight: 600,
+      fontSize: 22,
+      lineHeight: 28,
+      letterSpacing: -0.3,
+      family: "sans" as const,
+      weight: 700,
     },
   },
   heading: {
     h1: {
-      fontSize: 24,
-      lineHeight: 30,
-      letterSpacing: -0.4,
-      family: "serif" as const,
-      weight: 600,
-    },
-    h2: {
       fontSize: 20,
       lineHeight: 26,
       letterSpacing: -0.3,
-      family: "serif" as const,
-      weight: 600,
+      family: "sans" as const,
+      weight: 700,
+    },
+    h2: {
+      fontSize: 18,
+      lineHeight: 24,
+      letterSpacing: -0.2,
+      family: "sans" as const,
+      weight: 700,
     },
     h3: {
-      fontSize: 17,
-      lineHeight: 23,
-      letterSpacing: 0,
+      fontSize: 16,
+      lineHeight: 22,
       family: "sans" as const,
-      weight: 700,
+      weight: 600,
     },
     h4: {
-      fontSize: 15,
+      fontSize: 14,
       lineHeight: 20,
-      letterSpacing: 0,
       family: "sans" as const,
-      weight: 700,
+      weight: 600,
     },
   },
   body: {
     large: {
-      fontSize: 17,
-      lineHeight: 26,
+      fontSize: 16,
+      lineHeight: 24,
       family: "sans" as const,
       weight: 400,
     },
     default: {
-      fontSize: 15,
-      lineHeight: 22,
+      fontSize: 14,
+      lineHeight: 21,
       family: "sans" as const,
       weight: 400,
     },
     small: {
       fontSize: 13,
-      lineHeight: 19,
+      lineHeight: 18,
       family: "sans" as const,
       weight: 400,
     },
@@ -258,7 +268,6 @@ export const typography = {
     large: {
       fontSize: 15,
       lineHeight: 20,
-      letterSpacing: -0.1,
       family: "sans" as const,
       weight: 600,
     },
@@ -270,7 +279,7 @@ export const typography = {
     },
     small: {
       fontSize: 11,
-      lineHeight: 16,
+      lineHeight: 15,
       letterSpacing: 0.2,
       family: "sans" as const,
       weight: 600,
@@ -279,23 +288,22 @@ export const typography = {
   caption: {
     fontSize: 12,
     lineHeight: 16,
-    letterSpacing: 0.1,
     family: "sans" as const,
     weight: 500,
   },
   overline: {
     fontSize: 11,
-    lineHeight: 16,
-    letterSpacing: 1.4,
+    lineHeight: 15,
+    letterSpacing: 1,
     textTransform: "uppercase" as const,
     family: "sans" as const,
     weight: 700,
   },
 } as const;
 
-// Editorial elevation — barely-there; hairline borders do the real work.
+// Soft SaaS elevation — gentle drop shadows under white cards.
 const soft = (y: number, radius: number, opacity: number, elev: number) => ({
-  shadowColor: "#1A1712",
+  shadowColor: "#101828",
   shadowOffset: { width: 0, height: y },
   shadowOpacity: opacity,
   shadowRadius: radius,
@@ -304,11 +312,11 @@ const soft = (y: number, radius: number, opacity: number, elev: number) => ({
 
 export const shadows = {
   none: {},
-  xs: soft(1, 1, 0.03, 1),
-  sm: soft(1, 2, 0.04, 2),
-  md: soft(2, 6, 0.05, 3),
-  lg: soft(4, 12, 0.07, 6),
-  xl: soft(8, 20, 0.09, 10),
+  xs: soft(1, 2, 0.04, 1),
+  sm: soft(2, 4, 0.05, 2),
+  md: soft(4, 10, 0.07, 4),
+  lg: soft(8, 18, 0.09, 8),
+  xl: soft(12, 28, 0.12, 12),
 } as const;
 
 export const elevation = {
@@ -328,51 +336,55 @@ export const motion = {
   },
 } as const;
 
-/**
- * "Gradients" — intentionally FLAT in this system (two near-identical stops) so
- * every hero using expo-linear-gradient renders as a solid editorial panel, not
- * a showy sweep. The AI-tell gradient look is designed out here, centrally.
- */
+/** Gradients — navy welcome banner + ONE indigo accent sweep (all keys equal). */
 export const gradients = {
-  hero: ["#211C15", "#1A1712"] as const, // flat ink panel
-  teal: ["#E19A10", "#E19A10"] as const, // flat marigold (compat key)
-  brand: ["#E19A10", "#E19A10"] as const,
-  cobalt: ["#26526F", "#26526F"] as const,
-  light: ["#FFFFFF", "#FFFFFF"] as const,
-  mist: ["#F7F3EC", "#F7F3EC"] as const,
+  hero: ["#26355E", "#1E2B4D"] as const, // navy welcome banner (neutral dark)
+  teal: ["#6366F1", "#4F46E5"] as const, // indigo sweep (compat key)
+  brand: ["#6366F1", "#4F46E5"] as const,
+  cobalt: ["#6366F1", "#4F46E5"] as const,
+  violet: ["#6366F1", "#4F46E5"] as const, // was parent-only; now the one accent
+  light: ["#FFFFFF", "#F5F6FA"] as const,
+  mist: ["#EEF2FF", "#F5F6FA"] as const,
 } as const;
 
-/** Translucent chips for use on the rare ink panel (login/menu identity). */
+/** Translucent chips for use on navy/violet banner panels. */
 export const glass = {
   light: {
-    backgroundColor: "rgba(255,255,255,0.10)",
-    borderColor: "rgba(255,255,255,0.16)",
+    backgroundColor: "rgba(255,255,255,0.14)",
+    borderColor: "rgba(255,255,255,0.22)",
     borderWidth: 1,
   },
   lighter: {
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderColor: "rgba(255,255,255,0.14)",
     borderWidth: 1,
   },
   dark: {
-    backgroundColor: "rgba(26,23,18,0.06)",
-    borderColor: "rgba(26,23,18,0.10)",
+    backgroundColor: "rgba(16,24,40,0.06)",
+    borderColor: "rgba(16,24,40,0.10)",
     borderWidth: 1,
   },
 } as const;
 
 /**
- * Category tints — muted editorial swatches for status chips / stat tiles.
- * "teal" is the live/brand slot (marigold), the rest are quiet supporting hues.
+ * Category tints — the three accent-family slots (teal/blue/violet) are all the
+ * ONE indigo, so every "brand" tile is identical app-wide. green/amber/red are
+ * functional status colours and stay distinct. neutral is the quiet slate slot.
  */
+const indigoTint = {
+  bg: "#EEF2FF",
+  fg: "#4F46E5",
+  icon: "#4F46E5",
+  ring: "#C7D2FE",
+} as const;
 export const tints = {
-  neutral: { bg: "#F0EBE1", fg: "#57503F", icon: "#8A8272", ring: "#E4DDCF" },
-  teal: { bg: "#FCEFCF", fg: "#9A650A", icon: "#C0820C", ring: "#F6C65E" }, // brand
-  blue: { bg: "#EAF2F6", fg: "#26526F", icon: "#356C8F", ring: "#CFE0EA" },
-  green: { bg: "#EDF4EC", fg: "#3D6B4A", icon: "#4E8A5E", ring: "#CBE0CD" },
-  amber: { bg: "#FBF1D9", fg: "#8A5A12", icon: "#C0820C", ring: "#F0DCA8" },
-  red: { bg: "#F9ECE7", fg: "#A23A22", icon: "#C24A2E", ring: "#EDCFC5" },
-  violet: { bg: "#F0ECF3", fg: "#5E4A72", icon: "#7A6293", ring: "#DBD0E4" },
+  neutral: { bg: "#F2F4F7", fg: "#475467", icon: "#667085", ring: "#E4E7EC" },
+  teal: indigoTint, // live / brand
+  blue: indigoTint,
+  violet: indigoTint,
+  green: { bg: "#E8F7EE", fg: "#12805C", icon: "#12B76A", ring: "#B7E4C7" },
+  amber: { bg: "#FEF4E6", fg: "#B54708", icon: "#F79009", ring: "#FBDFB1" },
+  red: { bg: "#FEECEB", fg: "#B42318", icon: "#F04438", ring: "#F7C6C2" },
 } as const;
 
 export type TintName = keyof typeof tints;
@@ -401,8 +413,8 @@ export const layout = {
   itemGap: 12,
   sidebarWidth: 264,
   sidebarCollapsedWidth: 76,
-  tabBarHeight: 72,
-  tabBarClearance: 96,
+  tabBarHeight: 64,
+  tabBarClearance: 84,
   chipHeight: 36,
   chipRowHeight: 44,
   contentMaxWidth: 1200,

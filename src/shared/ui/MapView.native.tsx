@@ -12,8 +12,8 @@ import type { MapViewProps, MapMarker } from "./map.types";
 
 const KIND_COLOR: Record<NonNullable<MapMarker["kind"]>, string> = {
   vehicle: "#D68806", // bus-amber — the vehicle IS the school bus
-  student: "#2563EB",
-  home: "#7C3AED",
+  student: "#4F46E5", // brand indigo
+  home: "#475467", // neutral slate
   school: "#EA580C",
 };
 

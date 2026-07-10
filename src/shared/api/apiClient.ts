@@ -1,4 +1,5 @@
 import axios, { InternalAxiosRequestConfig } from "axios";
+import { Platform } from "react-native";
 import { environment } from "@config/env";
 import { useAuthStore } from "../store/useAuthStore";
 
@@ -50,6 +51,26 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+/** Uploads a local image (file:// or data:) to /media/upload → "/uploads/…". */
+export async function uploadImage(
+  uri: string,
+  name = "photo.jpg",
+): Promise<string> {
+  const form = new FormData();
+  if (Platform.OS === "web") {
+    const blob = await (await fetch(uri)).blob();
+    form.append("file", blob, name);
+  } else {
+    form.append("file", { uri, name, type: "image/jpeg" } as unknown as Blob);
+  }
+  const res = await apiClient.post<{ success: boolean; data: { url: string } }>(
+    "/media/upload",
+    form,
+    { headers: { "Content-Type": "multipart/form-data" } },
+  );
+  return res.data.data.url;
+}
 
 /** Extracts a human-friendly message from an axios error. */
 export function apiErrorMessage(

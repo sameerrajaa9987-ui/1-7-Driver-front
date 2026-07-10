@@ -28,7 +28,6 @@ export function UpsellCard({ feature }: { feature: string }) {
         <HStack>
           <Button
             label="View plans"
-            variant="accent"
             fullWidth={false}
             onPress={() => go("Subscription")}
           />

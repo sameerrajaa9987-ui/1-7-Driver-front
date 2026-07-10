@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, Image, StyleSheet } from "react-native";
 import { palette, radius } from "../designSystem";
 import { Text } from "./Text";
 
@@ -7,6 +7,13 @@ interface Props {
   name: string;
   size?: number;
   tone?: "teal" | "cobalt" | "slate";
+  /** Uploaded photo URL. When absent, a deterministic placeholder portrait
+   *  (client-mockup style) is used; set `photo={null}` + `placeholder={false}`
+   *  to force initials. */
+  photo?: string | null;
+  placeholder?: boolean;
+  /** Stable seed for the placeholder portrait (e.g. the student id). */
+  seed?: string;
 }
 
 const FILLS = {
@@ -21,8 +28,35 @@ function initials(name: string) {
   return (parts[0][0] + (parts[1]?.[0] || "")).toUpperCase();
 }
 
-export function Avatar({ name, size = 40, tone = "teal" }: Props) {
+/** Deterministic placeholder portrait per seed (mockup-style headshots). */
+export function placeholderPortrait(seed: string) {
+  return `https://i.pravatar.cc/150?u=${encodeURIComponent(seed)}`;
+}
+
+export function Avatar({
+  name,
+  size = 40,
+  tone = "teal",
+  photo,
+  placeholder = true,
+  seed,
+}: Props) {
   const c = FILLS[tone];
+  const uri = photo || (placeholder && seed ? placeholderPortrait(seed) : "");
+
+  if (uri) {
+    return (
+      <Image
+        source={{ uri }}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: radius.full,
+          backgroundColor: c.bg,
+        }}
+      />
+    );
+  }
   return (
     <View
       style={[

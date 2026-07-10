@@ -144,14 +144,9 @@ export default function OnboardingScreen() {
         <View style={styles.cta}>
           <Button
             label={isLast ? "Get started" : "Next"}
-            variant="accent"
             onPress={onNext}
             rightIcon={
-              <ArrowRight
-                size={18}
-                color={palette.ink[900]}
-                strokeWidth={2.4}
-              />
+              <ArrowRight size={18} color="#FFFFFF" strokeWidth={2.4} />
             }
           />
         </View>

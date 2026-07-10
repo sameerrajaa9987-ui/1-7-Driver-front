@@ -40,6 +40,7 @@ import DriverTodayNavigator from "@modules/trip/DriverTodayNavigator";
 import DriverPaymentsScreen from "@modules/payment/screens/DriverPaymentsScreen";
 
 import ParentTrackScreen from "@modules/tracking/screens/ParentTrackScreen";
+import ParentDashboardScreen from "@modules/dashboard/screens/ParentDashboardScreen";
 import ParentPaymentsScreen from "@modules/payment/screens/ParentPaymentsScreen";
 
 // Phase 2
@@ -284,11 +285,18 @@ const DRIVER: NavItem[] = [
 
 const PARENT: NavItem[] = [
   {
+    name: "Dashboard",
+    label: "Home",
+    icon: LayoutDashboard,
+    component: ParentDashboardScreen,
+    primary: true,
+    tint: "violet",
+  },
+  {
     name: "Track",
     label: "Track",
     icon: MapPin,
     component: ParentTrackScreen,
-    primary: true,
     tint: "teal",
   },
   {
