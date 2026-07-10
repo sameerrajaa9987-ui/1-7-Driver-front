@@ -1,8 +1,8 @@
 /**
- * ParentDashboardScreen — per the client kit: navy greeting banner, violet
- * live-status hero ("On the way · Arriving in ~ 6 min") with route/driver/
- * vehicle, journey step icons with times, and Call Driver / Emergency SOS
- * quick actions.
+ * ParentDashboardScreen — matches the client's "No Active Ride" mockup:
+ *   navy greeting · child selector (▾) · live-status hero OR an illustrated
+ *   "No Active Ride" card · Today's Schedule · Quick Actions · Stay Updated.
+ * Everything reflects the currently-selected child.
  */
 import React, { useEffect, useMemo, useState } from "react";
 import {
@@ -23,11 +23,16 @@ import {
   UserCheck,
   School,
   ChevronRight,
+  ChevronDown,
+  Clock,
+  CalendarDays,
+  BellRing,
+  Check,
 } from "lucide-react-native";
 import { emitSocket, onSocket } from "@shared/api/socket";
 import { useAuthStore } from "@shared/store/useAuthStore";
-import { useStudents, useTrips } from "@modules/trip/hooks/useTrips";
-import { useStudent } from "@modules/student/hooks/useStudents";
+import { useStudents } from "@modules/student/hooks/useStudents";
+import { useTrips } from "@modules/trip/hooks/useTrips";
 import { useTriggerSos } from "@modules/sos/hooks/useSos";
 import { useSectionNav } from "@navigation/AppNavigator";
 import {
@@ -39,6 +44,7 @@ import {
   tripStatusMeta,
 } from "@shared/designSystem";
 import { Screen, Text, VStack, HStack, Card, Avatar } from "@shared/ui";
+import { mediaUrl } from "@shared/media";
 import { Trip, TripStop } from "@modules/trip/types";
 import { DEMO_COORD, todayISO } from "@modules/trip/utils";
 
@@ -81,26 +87,35 @@ export default function ParentDashboardScreen() {
   const go = useSectionNav();
   const user = useAuthStore((s) => s.user);
   const date = todayISO();
-  const userId = user?.id ?? null;
 
-  const { data, isLoading, refetch, isRefetching } = useTrips({
-    date,
-    status: "in_progress",
-  });
-  useStudents(); // warms the cache used by Track
-  const trips = useMemo(() => data?.data ?? [], [data]);
+  const childrenQuery = useStudents({ limit: 50 });
+  const children = useMemo(
+    () => childrenQuery.data?.data ?? [],
+    [childrenQuery.data],
+  );
 
+  // Selected child (default first). The whole screen reflects this child.
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const child = useMemo(
+    () => children.find((c) => c.id === selectedId) ?? children[0] ?? null,
+    [children, selectedId],
+  );
+
+  const tripsQuery = useTrips({ date, status: "in_progress" });
+  const trips = useMemo(() => tripsQuery.data?.data ?? [], [tripsQuery.data]);
+
+  // The active trip + this child's stop, if a ride is currently running.
   const { trip, myStop } = useMemo(() => {
+    if (!child)
+      return { trip: null as Trip | null, myStop: null as TripStop | null };
     for (const t of trips) {
-      const stop = t.stops.find(
-        (s) => s.parentUserId && s.parentUserId === userId,
-      );
+      const stop = t.stops.find((s) => s.studentId === child.id);
       if (stop) return { trip: t, myStop: stop };
     }
     return { trip: null as Trip | null, myStop: null as TripStop | null };
-  }, [trips, userId]);
+  }, [trips, child]);
 
-  const { data: child } = useStudent(myStop?.studentId || "");
   const sos = useTriggerSos();
 
   // Live GPS frame for the ETA.
@@ -167,7 +182,7 @@ export default function ParentDashboardScreen() {
         tripId: trip?.id,
         lat: frame?.lat ?? 0,
         lng: frame?.lng ?? 0,
-        message: `Parent emergency${myStop ? ` about ${myStop.studentName}` : ""}`,
+        message: `Parent emergency${child ? ` about ${child.name}` : ""}`,
       });
     if (Platform.OS === "web") {
       if (window.confirm("Send an emergency alert to the operator?")) send();
@@ -179,11 +194,20 @@ export default function ParentDashboardScreen() {
     }
   };
 
+  const classLine = child
+    ? [child.className && `Class ${child.className}`, child.section]
+        .filter(Boolean)
+        .join(" · ") || child.schoolName
+    : "";
+
   return (
     <Screen
       title="Dashboard"
-      refreshing={isRefetching || isLoading}
-      onRefresh={refetch}
+      refreshing={childrenQuery.isLoading || tripsQuery.isRefetching}
+      onRefresh={() => {
+        childrenQuery.refetch();
+        tripsQuery.refetch();
+      }}
     >
       {/* Navy greeting banner */}
       <View style={styles.bannerWrap}>
@@ -218,7 +242,84 @@ export default function ParentDashboardScreen() {
         </LinearGradient>
       </View>
 
-      {/* Live status hero — violet (tap → Live Tracking) */}
+      {/* Child selector */}
+      {child ? (
+        <View style={{ marginTop: 14 }}>
+          <Pressable
+            onPress={() => children.length > 1 && setPickerOpen((o) => !o)}
+            style={styles.selector}
+          >
+            <Avatar
+              name={child.name}
+              seed={child.id}
+              size={44}
+              photo={child.photo ? mediaUrl(child.photo) : undefined}
+            />
+            <VStack gap={2} flex={1}>
+              <Text variant="label-lg" tone="primary" numberOfLines={1}>
+                {child.name}
+              </Text>
+              {classLine ? (
+                <Text variant="body-sm" tone="tertiary" numberOfLines={1}>
+                  {classLine}
+                </Text>
+              ) : null}
+            </VStack>
+            {children.length > 1 ? (
+              <ChevronDown
+                size={20}
+                color={palette.text.tertiary}
+                strokeWidth={2}
+                style={{
+                  transform: [{ rotate: pickerOpen ? "180deg" : "0deg" }],
+                }}
+              />
+            ) : null}
+          </Pressable>
+
+          {pickerOpen && children.length > 1 ? (
+            <Card style={{ marginTop: 8, padding: 6 }}>
+              {children.map((c) => {
+                const active = c.id === child.id;
+                return (
+                  <Pressable
+                    key={c.id}
+                    onPress={() => {
+                      setSelectedId(c.id);
+                      setPickerOpen(false);
+                    }}
+                    style={[
+                      styles.pickerRow,
+                      active && { backgroundColor: accent.soft },
+                    ]}
+                  >
+                    <Avatar
+                      name={c.name}
+                      seed={c.id}
+                      size={32}
+                      photo={c.photo ? mediaUrl(c.photo) : undefined}
+                    />
+                    <Text
+                      variant="label"
+                      weight={active ? "700" : "500"}
+                      tone="primary"
+                      style={{ flex: 1 }}
+                      numberOfLines={1}
+                    >
+                      {c.name}
+                    </Text>
+                    {active ? (
+                      <Check size={16} color={accent.main} strokeWidth={2.4} />
+                    ) : null}
+                  </Pressable>
+                );
+              })}
+            </Card>
+          ) : null}
+        </View>
+      ) : null}
+
+      {/* Live status hero (active) OR illustrated No Active Ride (idle) */}
       {trip && myStop ? (
         <Pressable onPress={() => go("Track")} style={styles.heroWrap}>
           <LinearGradient
@@ -286,24 +387,35 @@ export default function ParentDashboardScreen() {
           </LinearGradient>
         </Pressable>
       ) : (
-        <Card style={{ marginTop: 14 }}>
-          <HStack gap={12} align="center">
-            <View style={[styles.busTileLight]}>
-              <Bus size={24} color={accent.main} strokeWidth={1.9} />
+        <View style={[styles.emptyCard, { marginTop: 14 }]}>
+          <View style={styles.illus}>
+            <View style={styles.illusCircle}>
+              <Bus size={40} color={accent.main} strokeWidth={1.7} />
             </View>
-            <VStack gap={2} flex={1}>
-              <Text variant="h3" tone="primary">
-                No active ride right now
-              </Text>
-              <Text variant="body-sm" tone="tertiary">
-                Live updates appear here the moment the trip starts.
-              </Text>
-            </VStack>
-          </HStack>
-        </Card>
+            <View style={styles.illusBadge}>
+              <Clock size={15} color="#FFFFFF" strokeWidth={2.4} />
+            </View>
+          </View>
+          <Text
+            variant="h2"
+            align="center"
+            style={{ color: accent.main, marginTop: 4 }}
+          >
+            No Active Ride
+          </Text>
+          <Text
+            variant="body-sm"
+            tone="tertiary"
+            align="center"
+            style={{ marginTop: 6, maxWidth: 300 }}
+          >
+            There is no active trip right now. The next trip will appear here
+            once the driver starts the route.
+          </Text>
+        </View>
       )}
 
-      {/* Journey steps */}
+      {/* Journey steps (only during an active ride) */}
       {trip && myStop ? (
         <Card style={{ marginTop: 14 }}>
           <HStack gap={4}>
@@ -340,6 +452,36 @@ export default function ParentDashboardScreen() {
                 </Text>
               </VStack>
             ))}
+          </HStack>
+        </Card>
+      ) : null}
+
+      {/* Today's Schedule */}
+      {child ? (
+        <Card style={{ marginTop: 14 }}>
+          <HStack gap={8} align="center" style={{ marginBottom: 12 }}>
+            <CalendarDays size={17} color={accent.main} strokeWidth={2} />
+            <Text variant="h3" tone="primary">
+              Today’s Schedule
+            </Text>
+          </HStack>
+          <HStack gap={12}>
+            <View style={styles.scheduleCol}>
+              <Text variant="caption" tone="tertiary">
+                Pickup Time
+              </Text>
+              <Text variant="h3" tone="primary" style={{ marginTop: 4 }}>
+                {child.pickupTime || "—"}
+              </Text>
+            </View>
+            <View style={styles.scheduleCol}>
+              <Text variant="caption" tone="tertiary">
+                Drop Time
+              </Text>
+              <Text variant="h3" tone="primary" style={{ marginTop: 4 }}>
+                {child.dropTime || "—"}
+              </Text>
+            </View>
           </HStack>
         </Card>
       ) : null}
@@ -382,6 +524,22 @@ export default function ParentDashboardScreen() {
           </Text>
         </Pressable>
       </HStack>
+
+      {/* Stay Updated */}
+      <Pressable onPress={() => go("Notifications")} style={styles.stayCard}>
+        <View style={styles.stayIcon}>
+          <BellRing size={18} color={accent.main} strokeWidth={2} />
+        </View>
+        <VStack gap={2} flex={1}>
+          <Text variant="label-lg" tone="primary">
+            Stay Updated
+          </Text>
+          <Text variant="body-sm" tone="tertiary">
+            You’ll receive alerts at every step of your child’s journey.
+          </Text>
+        </VStack>
+        <ChevronRight size={18} color={palette.text.tertiary} strokeWidth={2} />
+      </Pressable>
     </Screen>
   );
 }
@@ -389,11 +547,24 @@ export default function ParentDashboardScreen() {
 const styles = StyleSheet.create({
   bannerWrap: { borderRadius: radius.lg, overflow: "hidden" },
   banner: { padding: 16 },
-  heroWrap: {
+  selector: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: palette.surface.primary,
     borderRadius: radius.lg,
-    overflow: "hidden",
-    marginTop: 14,
+    borderWidth: 1,
+    borderColor: palette.border.default,
+    padding: 12,
   },
+  pickerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 8,
+    borderRadius: radius.md,
+  },
+  heroWrap: { borderRadius: radius.lg, overflow: "hidden", marginTop: 14 },
   hero: { padding: 18 },
   busTile: {
     width: 56,
@@ -402,18 +573,46 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  busTileLight: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.md,
-    backgroundColor: palette.brand[50],
-    alignItems: "center",
-    justifyContent: "center",
-  },
   vehicleChip: {
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: radius.sm,
+  },
+  emptyCard: {
+    backgroundColor: palette.surface.primary,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: palette.border.default,
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    alignItems: "center",
+  },
+  illus: {
+    width: 96,
+    height: 84,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  illusCircle: {
+    width: 84,
+    height: 84,
+    borderRadius: radius.full,
+    backgroundColor: accent.soft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  illusBadge: {
+    position: "absolute",
+    right: 4,
+    bottom: 6,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: accent.main,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 3,
+    borderColor: palette.surface.primary,
   },
   stepIcon: {
     width: 38,
@@ -421,6 +620,12 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
+  },
+  scheduleCol: {
+    flex: 1,
+    backgroundColor: palette.surface.secondary,
+    borderRadius: radius.md,
+    padding: 14,
   },
   quick: {
     flex: 1,
@@ -430,5 +635,24 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 14,
     borderRadius: radius.md,
+  },
+  stayCard: {
+    marginTop: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: palette.surface.primary,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: palette.border.default,
+    padding: 14,
+  },
+  stayIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.md,
+    backgroundColor: accent.soft,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
