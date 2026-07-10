@@ -20,14 +20,7 @@ import {
   useMarkRead,
 } from "@modules/notification/hooks/useNotifications";
 import { Notification } from "@modules/notification/api/notificationApi";
-import { useAuthStore } from "@shared/store/useAuthStore";
-import {
-  palette,
-  radius,
-  outline,
-  tints,
-  accentFor,
-} from "@shared/designSystem";
+import { palette, radius, outline, tints, accent } from "@shared/designSystem";
 import { Screen, Text, VStack, HStack, Button, EmptyState } from "@shared/ui";
 
 function timeAgo(iso: string) {
@@ -87,8 +80,6 @@ function dayLabel(iso: string): string {
 }
 
 export default function NotificationsScreen() {
-  const role = useAuthStore((s) => s.user?.role);
-  const accent = accentFor(role);
   const [filter, setFilter] = useState<FilterKey>("all");
 
   const { data, isLoading, refetch, isRefetching } = useNotifications({

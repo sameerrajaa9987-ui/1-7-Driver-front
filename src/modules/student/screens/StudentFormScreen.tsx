@@ -18,7 +18,7 @@ import {
 import { StudentPayload } from "@modules/student/types";
 import { apiErrorMessage, uploadImage } from "@api/apiClient";
 import { mediaUrl } from "@shared/media";
-import { palette, radius, accentFor } from "@shared/designSystem";
+import { palette, radius, accent } from "@shared/designSystem";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import {
   Screen,
@@ -42,7 +42,6 @@ export default function StudentFormScreen() {
   const updateMut = useUpdateStudent(id || "");
   const mut = editing ? updateMut : createMut;
   const role = useAuthStore((s) => s.user?.role);
-  const accent = accentFor(role);
 
   // Child photo — starts as the default mockup portrait; parents can upload
   // their own from the gallery (stored via POST /media/upload).

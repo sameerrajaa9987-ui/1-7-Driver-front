@@ -9,9 +9,8 @@ import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LayoutGrid } from "lucide-react-native";
 import type { LucideIcon } from "lucide-react-native";
-import { palette, accentFor } from "@shared/designSystem";
+import { palette, accent } from "@shared/designSystem";
 import { Text } from "@shared/ui";
-import { useAuthStore } from "@shared/store/useAuthStore";
 import { useUnreadCount } from "@modules/notification/hooks/useNotifications";
 import type { NavItem } from "./navItems";
 
@@ -25,8 +24,6 @@ interface Props {
 
 export function TabDock({ items, active, onNavigate }: Props) {
   const insets = useSafeAreaInsets();
-  const role = useAuthStore((s) => s.user?.role);
-  const accent = accentFor(role);
   const unread = useUnreadCount();
   const hasUnread = (unread.data ?? 0) > 0;
   const alertsInDock = items.some((i) => i.name === "Notifications");

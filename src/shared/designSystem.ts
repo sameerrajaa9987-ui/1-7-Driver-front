@@ -13,9 +13,9 @@
  *   red = danger/SOS. These are semantics, not brand, so they stay.
  * - Type: Inter only, one shared scale. Spacing/radius/shadow: one token set.
  *
- * `accentFor(role)` intentionally returns the SAME indigo for every role — the
- * role argument is kept only so call-sites need not change. `palette.brand`,
- * `palette.teal`, `palette.cobalt` are all aliases of the one indigo ramp.
+ * There is ONE `accent` (indigo) for every role — never keyed by role.
+ * `palette.brand`, `palette.teal`, `palette.cobalt` are all aliases of the one
+ * indigo ramp.
  */
 
 // ---- fonts -----------------------------------------------------------------
@@ -46,26 +46,19 @@ export function resolveFont(family: FamilyName, weight: number): string {
   return table[pick as keyof typeof table];
 }
 
-// ---- the single brand accent — indigo, every role --------------------------
-/** The one accent used app-wide (primary buttons, active tab, links, icons). */
-export const brandAccent = {
+// ---- the single brand accent — indigo, used app-wide -----------------------
+/**
+ * The one accent for the whole product (primary buttons, active tab, links,
+ * key icons). There is exactly ONE — the design is intentionally not
+ * role-based — so this is a plain constant, never keyed by role.
+ */
+export const accent = {
   main: "#4F46E5",
   dark: "#4338CA",
   soft: "#EEF2FF",
   on: "#FFFFFF",
 } as const;
-
-// Kept keyed by role for backward-compat, but every role maps to the SAME
-// indigo — the design is consistent, not role-based.
-export const roleAccent = {
-  admin: brandAccent,
-  driver: brandAccent,
-  parent: brandAccent,
-  school: brandAccent,
-} as const;
-export type RoleAccentName = keyof typeof roleAccent;
-/** Always the single indigo accent — the `role` arg is ignored on purpose. */
-export const accentFor = (_role?: string | null) => brandAccent;
+export type Accent = typeof accent;
 
 // App accent ramp — one indigo, used everywhere via brand/teal/cobalt aliases.
 const indigo = {

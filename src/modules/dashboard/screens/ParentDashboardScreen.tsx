@@ -35,7 +35,7 @@ import {
   radius,
   gradients,
   glass,
-  accentFor,
+  accent,
   tripStatusMeta,
 } from "@shared/designSystem";
 import { Screen, Text, VStack, HStack, Card, Avatar } from "@shared/ui";
@@ -80,7 +80,6 @@ const fmtTime = (d?: string | null) =>
 export default function ParentDashboardScreen() {
   const go = useSectionNav();
   const user = useAuthStore((s) => s.user);
-  const accent = accentFor("parent");
   const date = todayISO();
   const userId = user?.id ?? null;
 

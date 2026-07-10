@@ -23,7 +23,7 @@ import {
   useConfirmTestPayment,
 } from "@modules/payment/hooks/usePayments";
 import { Payment, PaymentStatus } from "@modules/payment/types";
-import { palette, radius, tints, accentFor } from "@shared/designSystem";
+import { palette, radius, tints, accent, Accent } from "@shared/designSystem";
 import {
   Screen,
   Text,
@@ -91,7 +91,6 @@ function useMyChildren() {
 }
 
 export default function ParentPaymentsScreen() {
-  const accent = accentFor("parent");
   const { data, isLoading, refetch, isRefetching } = usePayments({ limit: 50 });
   const { data: children } = useMyChildren();
   const payments = data?.data ?? [];
@@ -173,7 +172,7 @@ function PayOnlineCard({
   accent,
 }: {
   child: StudentLite;
-  accent: ReturnType<typeof accentFor>;
+  accent: Accent;
 }) {
   const forMonth = currentMonth();
   const { data: preview } = useProrationPreview(child.id, forMonth);

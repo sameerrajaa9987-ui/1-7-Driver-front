@@ -16,7 +16,7 @@ import { useStudents } from "@modules/student/hooks/useStudents";
 import { Student, StudentStatus } from "@modules/student/types";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { PERMISSIONS } from "@shared/permissions";
-import { palette, radius, outline, accentFor } from "@shared/designSystem";
+import { palette, radius, outline, accent } from "@shared/designSystem";
 import { mediaUrl } from "@shared/media";
 import {
   Screen,
@@ -75,7 +75,7 @@ export default function StudentsScreen() {
               label="Add Child"
               size="sm"
               fullWidth={false}
-              tint={accentFor("parent").main}
+              tint={accent.main}
               icon={<Plus size={16} color="#FFFFFF" strokeWidth={2.2} />}
               onPress={() => navigation.navigate("StudentForm")}
             />
@@ -218,7 +218,6 @@ function ChildCard({
   student: Student;
   onPress: () => void;
 }) {
-  const accent = accentFor("parent");
   const rows = [
     { icon: RouteIcon, label: "Route", value: student.routeName },
     { icon: UserCog, label: "Driver", value: student.driverName },
