@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Image, StyleSheet } from "react-native";
+import { SvgXml } from "react-native-svg";
 import { palette, radius } from "../designSystem";
 import { Text } from "./Text";
 
@@ -8,23 +9,15 @@ interface Props {
   size?: number;
   /** Optional fixed tone; otherwise a deterministic colour from name/seed. */
   tone?: "teal" | "cobalt" | "slate";
-  /** Uploaded photo URL. When absent, initials (or `fallbackEmoji`) on a disc. */
+  /** Uploaded photo URL. When absent, an illustrated avatar or initials. */
   photo?: string | null;
-  /** Emoji shown instead of initials when there's no photo — e.g. a child face
-   *  (👦/👧/🧒). Warmer than initials for kids (emoji-style, per the client kit). */
-  fallbackEmoji?: string;
+  /** A raw SVG string (e.g. a DiceBear illustrated child avatar) shown when
+   *  there is no photo. Takes priority over initials. */
+  svgXml?: string;
   /** Accepted for compatibility; no longer changes rendering. */
   placeholder?: boolean;
   /** Stable seed for the colour (e.g. a user/student id). Falls back to name. */
   seed?: string;
-}
-
-/** A boy/girl/child face for a student without a photo. */
-export function childEmoji(gender?: string) {
-  const g = (gender || "").trim().toLowerCase();
-  if (g.startsWith("m") || g === "boy") return "👦";
-  if (g.startsWith("f") || g === "girl") return "👧";
-  return "🧒";
 }
 
 const FIXED = {
@@ -62,14 +55,7 @@ export function placeholderPortrait() {
   return "";
 }
 
-export function Avatar({
-  name,
-  size = 40,
-  tone,
-  photo,
-  fallbackEmoji,
-  seed,
-}: Props) {
+export function Avatar({ name, size = 40, tone, photo, svgXml, seed }: Props) {
   if (photo) {
     return (
       <Image
@@ -84,6 +70,21 @@ export function Avatar({
     );
   }
 
+  if (svgXml) {
+    return (
+      <View
+        style={{
+          width: size,
+          height: size,
+          borderRadius: radius.full,
+          overflow: "hidden",
+        }}
+      >
+        <SvgXml xml={svgXml} width={size} height={size} />
+      </View>
+    );
+  }
+
   const c = tone ? FIXED[tone] : colorFor(seed || name || "?");
   return (
     <View
@@ -93,19 +94,13 @@ export function Avatar({
           width: size,
           height: size,
           borderRadius: radius.full,
-          backgroundColor: fallbackEmoji ? "#EEF2FF" : c.bg,
+          backgroundColor: c.bg,
         },
       ]}
     >
-      {fallbackEmoji ? (
-        <Text style={{ fontSize: size * 0.56, lineHeight: size * 0.72 }}>
-          {fallbackEmoji}
-        </Text>
-      ) : (
-        <Text weight="700" style={{ color: c.fg, fontSize: size * 0.4 }}>
-          {initials(name)}
-        </Text>
-      )}
+      <Text weight="700" style={{ color: c.fg, fontSize: size * 0.4 }}>
+        {initials(name)}
+      </Text>
     </View>
   );
 }

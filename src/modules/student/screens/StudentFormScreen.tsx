@@ -29,8 +29,8 @@ import {
   Button,
   TextField,
   Avatar,
-  childEmoji,
 } from "@shared/ui";
+import { childAvatarSvg } from "@shared/avatars";
 
 export default function StudentFormScreen() {
   const navigation = useNavigation<any>();
@@ -186,7 +186,7 @@ export default function StudentFormScreen() {
                 name={f.name || "New Child"}
                 seed={id || "new-child"}
                 size={72}
-                fallbackEmoji={childEmoji(f.gender)}
+                svgXml={childAvatarSvg(id || f.name || "new-child")}
               />
             )}
             <Pressable

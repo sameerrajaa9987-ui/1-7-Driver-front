@@ -44,10 +44,10 @@ import {
   HStack,
   Card,
   Avatar,
-  childEmoji,
   BusScene,
   HeaderIconButton,
 } from "@shared/ui";
+import { childAvatarSvg } from "@shared/avatars";
 import { mediaUrl } from "@shared/media";
 import { Trip, TripStop } from "@modules/trip/types";
 import { DEMO_COORD, todayISO } from "@modules/trip/utils";
@@ -277,7 +277,7 @@ export default function ParentDashboardScreen() {
               seed={child.id}
               size={44}
               photo={child.photo ? mediaUrl(child.photo) : undefined}
-              fallbackEmoji={childEmoji(child.gender)}
+              svgXml={child.photo ? undefined : childAvatarSvg(child.id)}
             />
             <VStack gap={2} flex={1}>
               <Text variant="label-lg" tone="primary" numberOfLines={1}>
@@ -322,7 +322,7 @@ export default function ParentDashboardScreen() {
                       seed={c.id}
                       size={32}
                       photo={c.photo ? mediaUrl(c.photo) : undefined}
-                      fallbackEmoji={childEmoji(c.gender)}
+                      svgXml={c.photo ? undefined : childAvatarSvg(c.id)}
                     />
                     <Text
                       variant="label"

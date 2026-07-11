@@ -17,15 +17,8 @@ import {
   accent,
   glass,
 } from "@shared/designSystem";
-import {
-  Screen,
-  Text,
-  VStack,
-  HStack,
-  Avatar,
-  childEmoji,
-  EmptyState,
-} from "@shared/ui";
+import { Screen, Text, VStack, HStack, Avatar, EmptyState } from "@shared/ui";
+import { childAvatarSvg } from "@shared/avatars";
 import { mediaUrl } from "@shared/media";
 
 /** Stable, human-readable pass id from the student id. */
@@ -112,7 +105,7 @@ export default function BusPassScreen() {
                   seed={child.id}
                   size={46}
                   photo={child.photo ? mediaUrl(child.photo) : undefined}
-                  fallbackEmoji={childEmoji(child.gender)}
+                  svgXml={child.photo ? undefined : childAvatarSvg(child.id)}
                 />
                 <VStack gap={2} flex={1}>
                   <Text

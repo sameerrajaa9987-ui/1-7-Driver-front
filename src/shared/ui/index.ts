@@ -14,7 +14,7 @@ export { ChipsRow } from "./ChipsRow";
 export { Select } from "./Select";
 export type { SelectOption } from "./Select";
 export { Fab } from "./Fab";
-export { Avatar, childEmoji } from "./Avatar";
+export { Avatar } from "./Avatar";
 export { AppHeader } from "./AppHeader";
 export { HeroGlow } from "./HeroGlow";
 export { BrandLogo } from "./BrandLogo";

@@ -15,6 +15,7 @@ import {
 import { useStudents } from "@modules/student/hooks/useStudents";
 import { useTrips } from "@modules/trip/hooks/useTrips";
 import { todayISO } from "@modules/trip/utils";
+import { childAvatarSvg } from "@shared/avatars";
 import { Student, StudentStatus } from "@modules/student/types";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { PERMISSIONS } from "@shared/permissions";
@@ -27,7 +28,6 @@ import {
   HStack,
   Card,
   Avatar,
-  childEmoji,
   Button,
   StatusChip,
   ChipsRow,
@@ -273,7 +273,7 @@ function ChildCard({
           name={student.name}
           size={52}
           photo={student.photo ? mediaUrl(student.photo) : undefined}
-          fallbackEmoji={childEmoji(student.gender)}
+          svgXml={student.photo ? undefined : childAvatarSvg(student.id)}
           seed={student.id}
         />
         <VStack gap={3} flex={1}>
