@@ -1,5 +1,23 @@
+/**
+ * SettingsScreen — operator "Settings" (client mockup): a read-only list of
+ * billing/operations/notification policy rows showing each current value with a
+ * chevron. Tapping a row (or the header pencil) flips to the full edit form.
+ */
 import React, { useEffect, useState } from "react";
-import { View, Switch } from "react-native";
+import { View, Switch, StyleSheet } from "react-native";
+import {
+  CalendarDays,
+  Clock,
+  UserMinus,
+  Armchair,
+  Bell,
+  CalendarClock,
+  Timer,
+  Percent,
+  Pencil,
+  ChevronRight,
+  type LucideIcon,
+} from "lucide-react-native";
 import {
   useSettings,
   useUpdateSettings,
@@ -10,7 +28,7 @@ import {
   MidMonthLeaving,
 } from "@modules/settings/types";
 import { apiErrorMessage } from "@api/apiClient";
-import { palette, radius } from "@shared/designSystem";
+import { palette, radius, tints, type TintName } from "@shared/designSystem";
 import {
   Screen,
   Text,
@@ -21,6 +39,7 @@ import {
   TextField,
   Select,
   SelectOption,
+  HeaderIconButton,
 } from "@shared/ui";
 
 const HOLIDAY_OPTIONS: SelectOption[] = [
@@ -34,6 +53,17 @@ const LEAVING_OPTIONS: SelectOption[] = [
   { value: "prorate", label: "Prorate" },
   { value: "none", label: "No adjustment" },
 ];
+
+const HOLIDAY_LABEL: Record<HolidayBilling, string> = {
+  pause: "Pause",
+  prorate: "Prorate",
+  continue: "Continue",
+};
+const LEAVING_LABEL: Record<MidMonthLeaving, string> = {
+  refund: "Refund",
+  prorate: "Prorate",
+  none: "No adjustment",
+};
 
 type FormState = {
   holidayBilling: HolidayBilling;
@@ -65,6 +95,7 @@ export default function SettingsScreen() {
   const { data, isLoading, refetch, isRefetching } = useSettings();
   const updateMut = useUpdateSettings();
   const [f, setF] = useState<FormState | null>(null);
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     if (data) setF(toForm(data));
@@ -77,35 +108,99 @@ export default function SettingsScreen() {
 
   const save = () => {
     if (!f) return;
-    updateMut.mutate({
-      holidayBilling: f.holidayBilling,
-      suspendAfterOverdueDays: Number(f.suspendAfterOverdueDays) || 0,
-      midMonthLeaving: f.midMonthLeaving,
-      enforceVehicleCapacity: f.enforceVehicleCapacity,
-      whatsappEnabled: f.whatsappEnabled,
-      pushEnabled: f.pushEnabled,
-      waitingTimerMinutes: Number(f.waitingTimerMinutes) || 0,
-      reminderDaysBefore: f.reminderDaysBefore
-        .split(",")
-        .map((x) => Number(x.trim()))
-        .filter((n) => !Number.isNaN(n) && n > 0),
-      prorateFirstLastMonth: f.prorateFirstLastMonth,
-    });
+    updateMut.mutate(
+      {
+        holidayBilling: f.holidayBilling,
+        suspendAfterOverdueDays: Number(f.suspendAfterOverdueDays) || 0,
+        midMonthLeaving: f.midMonthLeaving,
+        enforceVehicleCapacity: f.enforceVehicleCapacity,
+        whatsappEnabled: f.whatsappEnabled,
+        pushEnabled: f.pushEnabled,
+        waitingTimerMinutes: Number(f.waitingTimerMinutes) || 0,
+        reminderDaysBefore: f.reminderDaysBefore
+          .split(",")
+          .map((x) => Number(x.trim()))
+          .filter((n) => !Number.isNaN(n) && n > 0),
+        prorateFirstLastMonth: f.prorateFirstLastMonth,
+      },
+      { onSuccess: () => setEditing(false) },
+    );
   };
+
+  const rows: {
+    icon: LucideIcon;
+    tint: TintName;
+    label: string;
+    value: string;
+  }[] = data
+    ? [
+        {
+          icon: CalendarDays,
+          tint: "green",
+          label: "Holiday Billing",
+          value: HOLIDAY_LABEL[data.holidayBilling],
+        },
+        {
+          icon: Clock,
+          tint: "amber",
+          label: "Suspend After Overdue",
+          value: `${data.suspendAfterOverdueDays ?? 0} Days`,
+        },
+        {
+          icon: UserMinus,
+          tint: "violet",
+          label: "Mid-month Leaving",
+          value: LEAVING_LABEL[data.midMonthLeaving],
+        },
+        {
+          icon: Armchair,
+          tint: "blue",
+          label: "Vehicle Capacity",
+          value: data.enforceVehicleCapacity ? "Enforce" : "Allow over",
+        },
+        {
+          icon: Bell,
+          tint: "amber",
+          label: "Push Notifications",
+          value: data.pushEnabled ? "Enabled" : "Disabled",
+        },
+        {
+          icon: CalendarClock,
+          tint: "blue",
+          label: "Reminder Days Before Due",
+          value: (data.reminderDaysBefore ?? []).join(", ") || "—",
+        },
+        {
+          icon: Timer,
+          tint: "violet",
+          label: "Waiting Timer (Driver)",
+          value: `${data.waitingTimerMinutes ?? 0} Minutes`,
+        },
+        {
+          icon: Percent,
+          tint: "green",
+          label: "Prorate First/Last Month",
+          value: data.prorateFirstLastMonth ? "Enabled" : "Disabled",
+        },
+      ]
+    : [];
 
   return (
     <Screen
-      overline="Configuration"
       title="Settings"
-      subtitle="Billing, operations & notifications"
       refreshing={isRefetching || isLoading}
       onRefresh={refetch}
+      right={
+        data && !editing ? (
+          <HeaderIconButton icon={Pencil} onPress={() => setEditing(true)} />
+        ) : undefined
+      }
     >
-      {!f ? (
+      {!f || !data ? (
         <Text variant="body-sm" tone="tertiary">
           {isLoading ? "Loading…" : "Settings unavailable."}
         </Text>
-      ) : (
+      ) : editing ? (
         <VStack gap={16}>
           <Card>
             <VStack gap={16}>
@@ -192,25 +287,65 @@ export default function SettingsScreen() {
           </Card>
 
           {updateMut.isError && (
-            <View style={errorBox}>
+            <View style={styles.errorBox}>
               <Text variant="body-sm" tone="danger">
                 {apiErrorMessage(updateMut.error)}
               </Text>
             </View>
           )}
-          {updateMut.isSuccess && (
-            <Text variant="body-sm" tone="success">
-              Settings saved.
-            </Text>
-          )}
 
-          <Button
-            label="Save changes"
-            size="lg"
-            loading={updateMut.isPending}
-            onPress={save}
-          />
+          <HStack gap={12}>
+            <View style={{ flex: 1 }}>
+              <Button
+                label="Cancel"
+                variant="secondary"
+                onPress={() => {
+                  setF(toForm(data));
+                  setEditing(false);
+                }}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Button
+                label="Save"
+                loading={updateMut.isPending}
+                onPress={save}
+              />
+            </View>
+          </HStack>
         </VStack>
+      ) : (
+        <Card padded={false} style={{ paddingVertical: 4 }}>
+          {rows.map((r, i) => {
+            const t = tints[r.tint];
+            return (
+              <View key={r.label}>
+                {i > 0 ? <View style={styles.divider} /> : null}
+                <HStack gap={12} align="center" style={styles.row}>
+                  <View style={[styles.icon, { backgroundColor: t.bg }]}>
+                    <r.icon size={17} color={t.icon} strokeWidth={2} />
+                  </View>
+                  <Text
+                    variant="label-lg"
+                    tone="primary"
+                    style={{ flex: 1 }}
+                    numberOfLines={1}
+                  >
+                    {r.label}
+                  </Text>
+                  <Text variant="label" weight="600" tone="tertiary">
+                    {r.value}
+                  </Text>
+                  <ChevronRight
+                    size={16}
+                    color={palette.text.tertiary}
+                    strokeWidth={2}
+                  />
+                </HStack>
+              </View>
+            );
+          })}
+        </Card>
       )}
     </Screen>
   );
@@ -248,10 +383,21 @@ function ToggleRow({
   );
 }
 
-const errorBox = {
-  padding: 14,
-  borderRadius: radius.md,
-  backgroundColor: palette.danger.bg,
-  borderWidth: 1,
-  borderColor: palette.danger.border,
-} as const;
+const styles = StyleSheet.create({
+  row: { paddingVertical: 14, paddingHorizontal: 14 },
+  icon: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  divider: { height: 1, backgroundColor: palette.border.subtle },
+  errorBox: {
+    padding: 14,
+    borderRadius: radius.md,
+    backgroundColor: palette.danger.bg,
+    borderWidth: 1,
+    borderColor: palette.danger.border,
+  },
+});

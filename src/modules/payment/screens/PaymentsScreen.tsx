@@ -1,11 +1,19 @@
-import React, { useState } from "react";
-import { View } from "react-native";
+/**
+ * PaymentsScreen — operator "Fees & Payments" (client mockup): an Overview /
+ * Cash Ledger segmented control. Overview shows Collected / Pending headline
+ * cards and a recent-transactions feed; Cash Ledger holds the verify/reject
+ * queue and each driver's unreconciled cash.
+ */
+import React, { useMemo, useState } from "react";
+import { View, Pressable, StyleSheet } from "react-native";
 import {
   ReceiptIndianRupee,
   Wallet,
   CheckCircle2,
   XCircle,
   User,
+  Banknote,
+  Smartphone,
 } from "lucide-react-native";
 import {
   usePayments,
@@ -13,18 +21,19 @@ import {
   useVerifyPayment,
   useRejectPayment,
 } from "@modules/payment/hooks/usePayments";
+import { useDashboardSummary } from "@modules/dashboard/hooks/useDashboard";
 import { Payment, PaymentStatus } from "@modules/payment/types";
 import { apiErrorMessage } from "@api/apiClient";
-import { palette } from "@shared/designSystem";
+import { palette, radius, tints, accent } from "@shared/designSystem";
 import {
   Screen,
   Text,
   VStack,
   HStack,
   Card,
+  Avatar,
   Button,
   StatusChip,
-  ChipsRow,
   EmptyState,
 } from "@shared/ui";
 
@@ -35,16 +44,17 @@ const STATUS_TONE: Record<PaymentStatus, "warning" | "success" | "danger"> = {
   verified: "success",
   rejected: "danger",
 };
-
-const STATUS_FILTERS: { key: "all" | PaymentStatus; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "pending", label: "Pending" },
-  { key: "verified", label: "Verified" },
-  { key: "rejected", label: "Rejected" },
-];
+const STATUS_LABEL: Record<PaymentStatus, string> = {
+  pending: "Pending",
+  verified: "Paid",
+  rejected: "Rejected",
+};
 
 export default function PaymentsScreen() {
-  const [status, setStatus] = useState<"all" | PaymentStatus>("all");
+  const [tab, setTab] = useState<"overview" | "ledger">("overview");
+
+  const summary = useDashboardSummary();
+  const finance = summary.data?.finance;
 
   const {
     data: pendingData,
@@ -57,7 +67,7 @@ export default function PaymentsScreen() {
     data: listData,
     isLoading: listLoading,
     refetch: refetchList,
-  } = usePayments(status === "all" ? { limit: 50 } : { status, limit: 50 });
+  } = usePayments({ limit: 50 });
 
   const {
     data: ledger,
@@ -69,9 +79,19 @@ export default function PaymentsScreen() {
   const reject = useRejectPayment();
 
   const pending = pendingData?.data ?? [];
-  const list = listData?.data ?? [];
+  const transactions = useMemo(
+    () =>
+      [...(listData?.data ?? [])]
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        )
+        .slice(0, 8),
+    [listData],
+  );
 
   const refetch = () => {
+    summary.refetch();
     refetchPending();
     refetchList();
     refetchLedger();
@@ -79,117 +99,237 @@ export default function PaymentsScreen() {
 
   return (
     <Screen
-      overline="Finance"
-      title="Payments"
-      subtitle="Verify collections and reconcile driver cash"
+      title="Fees & Payments"
       refreshing={pendingRefetching}
       onRefresh={refetch}
     >
+      {/* Segmented control */}
+      <View style={styles.segment}>
+        {(["overview", "ledger"] as const).map((k) => {
+          const active = tab === k;
+          return (
+            <Pressable
+              key={k}
+              onPress={() => setTab(k)}
+              style={[
+                styles.segBtn,
+                active && { backgroundColor: accent.main },
+              ]}
+            >
+              <Text
+                variant="label"
+                weight="700"
+                style={{ color: active ? "#FFFFFF" : palette.text.secondary }}
+              >
+                {k === "overview" ? "Overview" : "Cash Ledger"}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
       {(verify.isError || reject.isError) && (
-        <Card style={{ marginBottom: 16 }}>
+        <Card style={{ marginTop: 16 }}>
           <Text variant="body-sm" tone="danger">
             {apiErrorMessage(verify.error || reject.error)}
           </Text>
         </Card>
       )}
 
-      {/* Pending verification */}
-      <Text variant="h3" tone="primary" style={{ marginBottom: 12 }}>
-        Pending verification
-      </Text>
-      {pending.length === 0 ? (
-        <EmptyState
-          icon={CheckCircle2}
-          title={pendingLoading ? "Loading…" : "All caught up"}
-          message="No payments are waiting to be verified right now."
-        />
-      ) : (
-        <VStack gap={12}>
-          {pending.map((p) => (
-            <PendingRow
-              key={p.id}
-              payment={p}
-              onVerify={() => verify.mutate(p.id)}
-              onReject={() => reject.mutate({ id: p.id })}
-              busy={verify.isPending || reject.isPending}
-            />
-          ))}
-        </VStack>
-      )}
+      {tab === "overview" ? (
+        <>
+          {/* Headline cards */}
+          <HStack gap={12} style={{ marginTop: 16 }}>
+            <View
+              style={[styles.headCard, { backgroundColor: tints.green.bg }]}
+            >
+              <Text variant="h2" style={{ color: tints.green.fg }}>
+                {money(finance?.totalCollected ?? 0)}
+              </Text>
+              <Text variant="body-sm" style={{ color: tints.green.fg }}>
+                Collected
+              </Text>
+              <Text
+                variant="caption"
+                style={{ color: tints.green.fg, opacity: 0.8 }}
+              >
+                This Month
+              </Text>
+            </View>
+            <View
+              style={[styles.headCard, { backgroundColor: tints.amber.bg }]}
+            >
+              <Text variant="h2" style={{ color: tints.amber.fg }}>
+                {money(finance?.pending ?? 0)}
+              </Text>
+              <Text variant="body-sm" style={{ color: tints.amber.fg }}>
+                Pending
+              </Text>
+              <Text
+                variant="caption"
+                style={{ color: tints.amber.fg, opacity: 0.8 }}
+              >
+                Verification
+              </Text>
+            </View>
+          </HStack>
 
-      {/* Driver cash ledger */}
-      <Text
-        variant="h3"
-        tone="primary"
-        style={{ marginTop: 28, marginBottom: 12 }}
-      >
-        Driver cash ledger
-      </Text>
-      {ledger && ledger.length > 0 ? (
-        <VStack gap={12}>
-          {ledger.map((row, i) => (
-            <Card key={row.driverUserId ?? `row-${i}`}>
-              <HStack align="center" justify="space-between">
-                <HStack gap={12} align="center" flex={1}>
-                  <View style={iconWrap}>
-                    <Wallet
-                      size={18}
-                      color={palette.teal[600]}
-                      strokeWidth={2}
-                    />
-                  </View>
-                  <VStack gap={2} flex={1}>
-                    <Text variant="label-lg" tone="primary" numberOfLines={1}>
-                      {row.driverName || "Unassigned"}
-                    </Text>
-                    <Text variant="body-sm" tone="tertiary">
-                      {row.payments} pending{" "}
-                      {row.payments === 1 ? "collection" : "collections"}
-                    </Text>
-                  </VStack>
-                </HStack>
-                <Text variant="h3" tone="primary">
-                  {money(row.amountHeld)}
+          {/* Recent transactions */}
+          <HStack
+            align="center"
+            justify="space-between"
+            style={{ marginTop: 26, marginBottom: 12 }}
+          >
+            <Text variant="h3" tone="primary">
+              Recent Transactions
+            </Text>
+            {pending.length > 0 ? (
+              <Pressable onPress={() => setTab("ledger")} hitSlop={8}>
+                <Text variant="label" weight="600" tone="accent">
+                  View All
                 </Text>
-              </HStack>
-            </Card>
-          ))}
-        </VStack>
-      ) : (
-        <EmptyState
-          icon={Wallet}
-          title={ledgerLoading ? "Loading…" : "No cash held"}
-          message="Drivers have no unreconciled cash collections."
-        />
-      )}
+              </Pressable>
+            ) : null}
+          </HStack>
 
-      {/* All payments (filterable) */}
-      <Text
-        variant="h3"
-        tone="primary"
-        style={{ marginTop: 28, marginBottom: 12 }}
-      >
-        All payments
-      </Text>
-      <ChipsRow
-        chips={STATUS_FILTERS.map((f) => ({ key: f.key, label: f.label }))}
-        active={status}
-        onChange={(key) => setStatus(key as "all" | PaymentStatus)}
-      />
-      {list.length === 0 ? (
-        <EmptyState
-          icon={ReceiptIndianRupee}
-          title={listLoading ? "Loading…" : "No payments"}
-          message="Payments will appear here as they are recorded."
-        />
+          {transactions.length === 0 ? (
+            <EmptyState
+              icon={ReceiptIndianRupee}
+              title={listLoading ? "Loading…" : "No transactions yet"}
+              message="Payments will appear here as they are recorded."
+            />
+          ) : (
+            <Card padded={false} style={{ paddingVertical: 4 }}>
+              {transactions.map((p, i) => (
+                <View key={p.id}>
+                  {i > 0 ? <View style={styles.divider} /> : null}
+                  <TransactionRow payment={p} />
+                </View>
+              ))}
+            </Card>
+          )}
+        </>
       ) : (
-        <VStack gap={12} style={{ marginTop: 12 }}>
-          {list.map((p) => (
-            <PaymentCard key={p.id} payment={p} />
-          ))}
-        </VStack>
+        <>
+          {/* Pending verification queue */}
+          <Text
+            variant="h3"
+            tone="primary"
+            style={{ marginTop: 20, marginBottom: 12 }}
+          >
+            Pending Verification
+          </Text>
+          {pending.length === 0 ? (
+            <EmptyState
+              icon={CheckCircle2}
+              title={pendingLoading ? "Loading…" : "All caught up"}
+              message="No payments are waiting to be verified right now."
+            />
+          ) : (
+            <VStack gap={12}>
+              {pending.map((p) => (
+                <PendingRow
+                  key={p.id}
+                  payment={p}
+                  onVerify={() => verify.mutate(p.id)}
+                  onReject={() => reject.mutate({ id: p.id })}
+                  busy={verify.isPending || reject.isPending}
+                />
+              ))}
+            </VStack>
+          )}
+
+          {/* Driver cash ledger */}
+          <Text
+            variant="h3"
+            tone="primary"
+            style={{ marginTop: 28, marginBottom: 12 }}
+          >
+            Driver Cash Held
+          </Text>
+          {ledger && ledger.length > 0 ? (
+            <VStack gap={12}>
+              {ledger.map((row, i) => (
+                <Card key={row.driverUserId ?? `row-${i}`}>
+                  <HStack align="center" justify="space-between">
+                    <HStack gap={12} align="center" flex={1}>
+                      <View style={styles.walletIcon}>
+                        <Wallet
+                          size={18}
+                          color={tints.amber.icon}
+                          strokeWidth={2}
+                        />
+                      </View>
+                      <VStack gap={2} flex={1}>
+                        <Text
+                          variant="label-lg"
+                          tone="primary"
+                          numberOfLines={1}
+                        >
+                          {row.driverName || "Unassigned"}
+                        </Text>
+                        <Text variant="body-sm" tone="tertiary">
+                          {row.payments} pending{" "}
+                          {row.payments === 1 ? "collection" : "collections"}
+                        </Text>
+                      </VStack>
+                    </HStack>
+                    <Text variant="h3" tone="primary">
+                      {money(row.amountHeld)}
+                    </Text>
+                  </HStack>
+                </Card>
+              ))}
+            </VStack>
+          ) : (
+            <EmptyState
+              icon={Wallet}
+              title={ledgerLoading ? "Loading…" : "No cash held"}
+              message="Drivers have no unreconciled cash collections."
+            />
+          )}
+        </>
       )}
     </Screen>
+  );
+}
+
+function TransactionRow({ payment }: { payment: Payment }) {
+  const isCash = payment.mode === "cash";
+  const title = payment.receivedByName || "Fee payment";
+  return (
+    <HStack gap={12} align="center" style={styles.txRow}>
+      <Avatar name={title} seed={payment.id} size={38} />
+      <VStack gap={2} flex={1}>
+        <Text variant="label-lg" weight="600" tone="primary" numberOfLines={1}>
+          {title}
+        </Text>
+        <HStack gap={5} align="center">
+          {isCash ? (
+            <Banknote size={12} color={palette.text.tertiary} strokeWidth={2} />
+          ) : (
+            <Smartphone
+              size={12}
+              color={palette.text.tertiary}
+              strokeWidth={2}
+            />
+          )}
+          <Text variant="caption" tone="tertiary">
+            {isCash ? "Cash Payment" : "Online Payment"}
+            {payment.forMonth ? ` · ${payment.forMonth}` : ""}
+          </Text>
+        </HStack>
+      </VStack>
+      <VStack gap={3} align="flex-end">
+        <Text variant="label-lg" weight="700" tone="primary">
+          {money(payment.amount)}
+        </Text>
+        <StatusChip
+          label={STATUS_LABEL[payment.status]}
+          tone={STATUS_TONE[payment.status]}
+        />
+      </VStack>
+    </HStack>
   );
 }
 
@@ -218,7 +358,6 @@ function PendingRow({
                 {payment.receivedByName
                   ? `Collected by ${payment.receivedByName}`
                   : "Collected offline"}
-                {payment.receivedByRole ? ` · ${payment.receivedByRole}` : ""}
               </Text>
             </HStack>
           </VStack>
@@ -230,11 +369,6 @@ function PendingRow({
         {payment.forMonth ? (
           <Text variant="body-sm" tone="tertiary">
             For {payment.forMonth}
-          </Text>
-        ) : null}
-        {payment.notes ? (
-          <Text variant="body-sm" tone="secondary">
-            {payment.notes}
           </Text>
         ) : null}
         <HStack gap={10}>
@@ -261,31 +395,38 @@ function PendingRow({
   );
 }
 
-function PaymentCard({ payment }: { payment: Payment }) {
-  return (
-    <Card>
-      <HStack align="center" justify="space-between">
-        <VStack gap={3} flex={1}>
-          <Text variant="label-lg" tone="primary">
-            {money(payment.amount)}
-          </Text>
-          <Text variant="body-sm" tone="tertiary">
-            {payment.mode === "cash" ? "Cash" : "Transfer"}
-            {payment.receivedByName ? ` · ${payment.receivedByName}` : ""}
-            {payment.receiptNumber ? ` · ${payment.receiptNumber}` : ""}
-          </Text>
-        </VStack>
-        <StatusChip label={payment.status} tone={STATUS_TONE[payment.status]} />
-      </HStack>
-    </Card>
-  );
-}
-
-const iconWrap = {
-  width: 40,
-  height: 40,
-  borderRadius: 12,
-  backgroundColor: palette.teal[50],
-  alignItems: "center" as const,
-  justifyContent: "center" as const,
-};
+const styles = StyleSheet.create({
+  segment: {
+    flexDirection: "row",
+    backgroundColor: palette.surface.secondary,
+    borderRadius: radius.full,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: palette.border.default,
+  },
+  segBtn: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 9,
+    borderRadius: radius.full,
+  },
+  headCard: {
+    flex: 1,
+    borderRadius: radius.lg,
+    padding: 16,
+    gap: 2,
+    minHeight: 96,
+    justifyContent: "center",
+  },
+  txRow: { paddingVertical: 12, paddingHorizontal: 14 },
+  walletIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.md,
+    backgroundColor: tints.amber.bg,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  divider: { height: 1, backgroundColor: palette.border.subtle },
+});

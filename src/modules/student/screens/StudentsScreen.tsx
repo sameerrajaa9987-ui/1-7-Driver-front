@@ -272,7 +272,13 @@ function StudentRow({
   return (
     <Card onPress={onPress} elevation="base">
       <HStack gap={14} align="center">
-        <Avatar name={student.name} size={46} />
+        <Avatar
+          name={student.name}
+          size={46}
+          photo={student.photo ? mediaUrl(student.photo) : undefined}
+          svgXml={student.photo ? undefined : childAvatarSvg(student.id)}
+          seed={student.id}
+        />
         <VStack gap={4} flex={1}>
           <Text variant="label-lg" tone="primary" numberOfLines={1}>
             {student.name}

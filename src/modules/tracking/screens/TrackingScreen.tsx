@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { Bus, Navigation } from "lucide-react-native";
 import { onSocket } from "@shared/api/socket";
 import LiveMap from "@shared/ui/MapView";
 import type { MapMarker } from "@shared/ui/map.types";
-import { palette } from "@shared/designSystem";
+import { palette, radius, tints } from "@shared/designSystem";
 import {
   Screen,
   Text,
@@ -36,6 +36,15 @@ export default function TrackingScreen() {
     status: "in_progress",
   });
   const trips = useMemo(() => data?.data ?? [], [data]);
+
+  // All of today's trips — for the Completed count in the legend.
+  const allToday = useTrips({ date });
+  const completedCount = useMemo(
+    () =>
+      (allToday.data?.data ?? []).filter((t) => t.status === "completed")
+        .length,
+    [allToday.data],
+  );
 
   // Live vehicle positions keyed by tripId.
   const [positions, setPositions] = useState<Record<string, VehicleFrame>>({});
@@ -76,20 +85,42 @@ export default function TrackingScreen() {
     ? { lat: markers[0].lat, lng: markers[0].lng }
     : DEMO_COORD;
 
+  const onTheWay = markers.length;
+  const awaiting = Math.max(0, trips.length - markers.length);
+
   return (
     <Screen
-      overline="Live"
-      title="Fleet tracking"
-      subtitle={`${trips.length} active trips · ${markers.length} vehicles reporting`}
+      title="Live Map"
       refreshing={isRefetching || isLoading}
       onRefresh={refetch}
     >
-      <LiveMap markers={markers} center={center} height={300} />
+      <View style={styles.mapWrap}>
+        <LiveMap markers={markers} center={center} height={300} />
+      </View>
+
+      {/* Legend */}
+      <HStack gap={8} style={{ marginTop: 12 }}>
+        <LegendPill
+          color={tints.green.icon}
+          label="On the way"
+          count={onTheWay}
+        />
+        <LegendPill
+          color={tints.amber.icon}
+          label="Awaiting GPS"
+          count={awaiting}
+        />
+        <LegendPill
+          color={palette.text.tertiary}
+          label="Completed"
+          count={completedCount}
+        />
+      </HStack>
 
       <Text
         variant="h3"
         tone="primary"
-        style={{ marginTop: 20, marginBottom: 12 }}
+        style={{ marginTop: 22, marginBottom: 12 }}
       >
         Active trips
       </Text>
@@ -108,6 +139,28 @@ export default function TrackingScreen() {
         </VStack>
       )}
     </Screen>
+  );
+}
+
+function LegendPill({
+  color,
+  label,
+  count,
+}: {
+  color: string;
+  label: string;
+  count: number;
+}) {
+  return (
+    <View style={styles.legend}>
+      <View style={[styles.legendDot, { backgroundColor: color }]} />
+      <Text variant="caption" weight="600" tone="secondary" numberOfLines={1}>
+        {label}
+      </Text>
+      <Text variant="caption" weight="700" tone="primary">
+        {count}
+      </Text>
+    </View>
   );
 }
 
@@ -146,3 +199,20 @@ function ActiveTripRow({ trip, frame }: { trip: Trip; frame?: VehicleFrame }) {
     </Card>
   );
 }
+
+const styles = StyleSheet.create({
+  mapWrap: { borderRadius: radius.lg, overflow: "hidden" },
+  legend: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 9,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: palette.border.default,
+    backgroundColor: palette.surface.primary,
+  },
+  legendDot: { width: 8, height: 8, borderRadius: 4 },
+});

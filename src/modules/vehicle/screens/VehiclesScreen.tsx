@@ -1,12 +1,19 @@
 import React, { useState } from "react";
 import { View, TextInput, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Search, Plus, Bus, Armchair, ChevronRight } from "lucide-react-native";
+import {
+  Search,
+  Plus,
+  Bus,
+  Armchair,
+  ChevronRight,
+  FileText,
+} from "lucide-react-native";
 import { useVehicles } from "@modules/vehicle/hooks/useVehicles";
 import { Vehicle } from "@modules/vehicle/types";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { PERMISSIONS } from "@shared/permissions";
-import { palette, radius, outline } from "@shared/designSystem";
+import { palette, radius, outline, tints } from "@shared/designSystem";
 import {
   Screen,
   Text,
@@ -80,6 +87,30 @@ export default function VehiclesScreen() {
   );
 }
 
+const SOON_MS = 30 * 86_400_000;
+
+/** Soonest document expiry → an at-a-glance compliance chip. */
+function docStatus(vehicle: Vehicle): {
+  label: string;
+  tone: "success" | "warning" | "danger";
+  soonName?: string;
+} {
+  const docs = vehicle.documents ? Object.entries(vehicle.documents) : [];
+  let soonest: { name: string; ms: number } | null = null;
+  for (const [name, doc] of docs) {
+    if (!doc?.expiryDate) continue;
+    const ms = new Date(doc.expiryDate).getTime();
+    if (!soonest || ms < soonest.ms) soonest = { name, ms };
+  }
+  if (!soonest) return { label: "Active", tone: "success" };
+  const now = Date.now();
+  if (soonest.ms < now)
+    return { label: "Docs Expired", tone: "danger", soonName: soonest.name };
+  if (soonest.ms < now + SOON_MS)
+    return { label: "Expiring Soon", tone: "warning", soonName: soonest.name };
+  return { label: "Active", tone: "success" };
+}
+
 function VehicleRow({
   vehicle,
   onPress,
@@ -87,6 +118,9 @@ function VehicleRow({
   vehicle: Vehicle;
   onPress: () => void;
 }) {
+  const compliance = !vehicle.isActive
+    ? { label: "Inactive", tone: "danger" as const, soonName: undefined }
+    : docStatus(vehicle);
   return (
     <Card onPress={onPress} elevation="base">
       <HStack gap={14} align="center">
@@ -97,33 +131,41 @@ function VehicleRow({
           <Text variant="label-lg" tone="primary" numberOfLines={1}>
             {vehicle.vehicleNumber}
           </Text>
-          <HStack gap={6} align="center">
-            {vehicle.model ? (
-              <Text variant="body-sm" tone="tertiary">
-                {vehicle.model}
-              </Text>
-            ) : (
-              <Text variant="body-sm" tone="tertiary">
-                No model
-              </Text>
-            )}
+          <Text variant="body-sm" tone="tertiary">
+            {vehicle.model || "No model"}
+          </Text>
+          <HStack gap={12} align="center">
+            {vehicle.seatingCapacity ? (
+              <HStack gap={5} align="center">
+                <Armchair
+                  size={13}
+                  color={palette.text.tertiary}
+                  strokeWidth={1.9}
+                />
+                <Text variant="body-sm" tone="tertiary">
+                  {vehicle.seatingCapacity} seats
+                </Text>
+              </HStack>
+            ) : null}
+            {compliance.soonName ? (
+              <HStack gap={5} align="center">
+                <FileText
+                  size={13}
+                  color={tints.amber.icon}
+                  strokeWidth={1.9}
+                />
+                <Text
+                  variant="body-sm"
+                  style={{ color: tints.amber.fg }}
+                  numberOfLines={1}
+                >
+                  {compliance.soonName}
+                </Text>
+              </HStack>
+            ) : null}
           </HStack>
-          {vehicle.seatingCapacity ? (
-            <HStack gap={5} align="center">
-              <Armchair
-                size={13}
-                color={palette.text.tertiary}
-                strokeWidth={1.9}
-              />
-              <Text variant="body-sm" tone="tertiary">
-                {vehicle.seatingCapacity} seats
-              </Text>
-            </HStack>
-          ) : null}
         </VStack>
-        {!vehicle.isActive ? (
-          <StatusChip label="Inactive" tone="danger" />
-        ) : null}
+        <StatusChip label={compliance.label} tone={compliance.tone} />
         <ChevronRight size={18} color={palette.text.tertiary} strokeWidth={2} />
       </HStack>
     </Card>

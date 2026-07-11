@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { View, TextInput, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import {
@@ -6,9 +6,11 @@ import {
   Plus,
   Route as RouteIcon,
   Users,
+  UserCog,
   ChevronRight,
 } from "lucide-react-native";
 import { useRoutes } from "@modules/route/hooks/useRoutes";
+import { useDrivers } from "@modules/driver/hooks/useDrivers";
 import { Route } from "@modules/route/types";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { PERMISSIONS } from "@shared/permissions";
@@ -32,6 +34,12 @@ export default function RoutesScreen() {
   const { data, isLoading, refetch, isRefetching } = useRoutes(
     search.trim() ? { search: search.trim() } : undefined,
   );
+  const driversQuery = useDrivers();
+  const driversById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const d of driversQuery.data?.data ?? []) m.set(d.id, d.fullName);
+    return m;
+  }, [driversQuery.data]);
   const routes = data?.data ?? [];
 
   return (
@@ -76,6 +84,7 @@ export default function RoutesScreen() {
             <RouteRow
               key={r.id}
               route={r}
+              driverName={r.driverId ? driversById.get(r.driverId) : undefined}
               onPress={() => navigation.navigate("RouteForm", { id: r.id })}
             />
           ))}
@@ -85,7 +94,15 @@ export default function RoutesScreen() {
   );
 }
 
-function RouteRow({ route, onPress }: { route: Route; onPress: () => void }) {
+function RouteRow({
+  route,
+  driverName,
+  onPress,
+}: {
+  route: Route;
+  driverName?: string;
+  onPress: () => void;
+}) {
   return (
     <Card onPress={onPress} elevation="base">
       <HStack gap={14} align="center">
@@ -96,11 +113,16 @@ function RouteRow({ route, onPress }: { route: Route; onPress: () => void }) {
           <Text variant="label-lg" tone="primary" numberOfLines={1}>
             {route.name}
           </Text>
-          {route.description ? (
+          <HStack gap={5} align="center">
+            <UserCog
+              size={13}
+              color={palette.text.tertiary}
+              strokeWidth={1.9}
+            />
             <Text variant="body-sm" tone="tertiary" numberOfLines={1}>
-              {route.description}
+              {driverName || "No driver assigned"}
             </Text>
-          ) : null}
+          </HStack>
           <HStack gap={5} align="center">
             <Users size={13} color={palette.text.tertiary} strokeWidth={1.9} />
             <Text variant="body-sm" tone="tertiary">
@@ -108,7 +130,10 @@ function RouteRow({ route, onPress }: { route: Route; onPress: () => void }) {
             </Text>
           </HStack>
         </VStack>
-        {!route.isActive ? <StatusChip label="Inactive" tone="danger" /> : null}
+        <StatusChip
+          label={route.isActive ? "Active" : "Inactive"}
+          tone={route.isActive ? "success" : "danger"}
+        />
         <ChevronRight size={18} color={palette.text.tertiary} strokeWidth={2} />
       </HStack>
     </Card>
