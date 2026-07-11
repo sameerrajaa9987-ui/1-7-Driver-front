@@ -10,13 +10,6 @@ import type { MapViewProps, MapMarker } from "./map.types";
  * injected into the running page — no reloads while the van moves.
  */
 
-const KIND_COLOR: Record<NonNullable<MapMarker["kind"]>, string> = {
-  vehicle: "#D68806", // bus-amber — the vehicle IS the school bus
-  student: "#4F46E5", // brand indigo
-  home: "#475467", // neutral slate
-  school: "#EA580C",
-};
-
 function buildHtml(center: { lat: number; lng: number }, zoom: number) {
   return `<!DOCTYPE html>
 <html>
@@ -26,7 +19,6 @@ function buildHtml(center: { lat: number; lng: number }, zoom: number) {
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; background: #F1EFEA; }
-  .dot { border-radius: 50%; border: 2.5px solid #FFFFFF; box-shadow: 0 1px 4px rgba(11,21,38,0.4); }
 </style>
 </head>
 <body>
@@ -38,19 +30,31 @@ function buildHtml(center: { lat: number; lng: number }, zoom: number) {
   }).addTo(map);
   var layer = L.layerGroup().addTo(map);
 
-  function dot(color) {
-    return L.divIcon({
-      className: '',
-      html: '<div class="dot" style="width:18px;height:18px;background:' + color + '"></div>',
-      iconSize: [18, 18],
-      iconAnchor: [9, 9]
-    });
+  function vehicleIcon() {
+    return L.divIcon({ className: '', iconSize: [42,42], iconAnchor: [21,21],
+      html: '<div style="filter:drop-shadow(0 3px 5px rgba(16,24,40,.35))"><svg width="42" height="42" viewBox="0 0 42 42" fill="none"><circle cx="21" cy="21" r="16" fill="#F79009" stroke="#fff" stroke-width="3"/><rect x="12.5" y="14.5" width="17" height="11.5" rx="2.5" fill="#fff"/><rect x="14" y="16.5" width="4" height="3.6" rx="1" fill="#F79009"/><rect x="19" y="16.5" width="4" height="3.6" rx="1" fill="#F79009"/><rect x="24" y="16.5" width="3.5" height="3.6" rx="1" fill="#F79009"/><circle cx="16" cy="27" r="2.1" fill="#1E293B"/><circle cx="26" cy="27" r="2.1" fill="#1E293B"/></svg></div>' });
+  }
+  function pinIcon(color) {
+    return L.divIcon({ className: '', iconSize: [30,40], iconAnchor: [15,40],
+      html: '<div style="filter:drop-shadow(0 3px 5px rgba(16,24,40,.35))"><svg width="30" height="40" viewBox="0 0 30 40" fill="none"><path d="M15 2C8.4 2 3 7.4 3 14c0 8.4 12 24 12 24s12-15.6 12-24C27 7.4 21.6 2 15 2z" fill="' + color + '" stroke="#fff" stroke-width="2.5"/><circle cx="15" cy="14" r="4.6" fill="#fff"/></svg></div>' });
+  }
+  function iconFor(kind) {
+    if (kind === 'vehicle') return vehicleIcon();
+    if (kind === 'school') return pinIcon('#EA580C');
+    return pinIcon('#EF4444');
   }
 
   window.__setState = function (markers, center) {
     layer.clearLayers();
-    (markers || []).forEach(function (m) {
-      var marker = L.marker([m.lat, m.lng], { icon: dot(m.color) });
+    markers = markers || [];
+    var v = null, d = null;
+    markers.forEach(function (m) { if (m.kind === 'vehicle') v = m; else if (!d) d = m; });
+    if (v && d) {
+      var mid = [ (v.lat+d.lat)/2 + (d.lng-v.lng)*0.12, (v.lng+d.lng)/2 - (d.lat-v.lat)*0.12 ];
+      L.polyline([[v.lat,v.lng], mid, [d.lat,d.lng]], { color:'#6366F1', weight:4, opacity:0.85, lineCap:'round', lineJoin:'round' }).addTo(layer);
+    }
+    markers.forEach(function (m) {
+      var marker = L.marker([m.lat, m.lng], { icon: iconFor(m.kind) });
       if (m.label) marker.bindPopup(m.label);
       marker.on('click', function () {
         if (window.ReactNativeWebView)
@@ -58,7 +62,11 @@ function buildHtml(center: { lat: number; lng: number }, zoom: number) {
       });
       marker.addTo(layer);
     });
-    if (center) map.panTo([center.lat, center.lng]);
+    if (v && d) {
+      map.fitBounds([[v.lat,v.lng],[d.lat,d.lng]], { padding: [56,56], maxZoom: 15 });
+    } else if (center) {
+      map.panTo([center.lat, center.lng]);
+    }
   };
 </script>
 </body>
@@ -91,7 +99,7 @@ export default function LiveMap({
           lat: m.lat,
           lng: m.lng,
           label: m.label || "",
-          color: KIND_COLOR[m.kind || "student"],
+          kind: m.kind || "student",
         })),
       ),
     [markers],

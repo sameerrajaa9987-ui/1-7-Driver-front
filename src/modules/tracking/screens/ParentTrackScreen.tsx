@@ -7,6 +7,7 @@ import {
   View,
   StyleSheet,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import {
   Bus,
   Gauge,
@@ -14,6 +15,8 @@ import {
   ShieldAlert,
   RefreshCw,
   Check,
+  Navigation2,
+  MapPin,
 } from "lucide-react-native";
 import { emitSocket, onSocket } from "@shared/api/socket";
 import LiveMap from "@shared/ui/MapView";
@@ -27,6 +30,7 @@ import {
   tints,
   accent,
   tripStatusMeta,
+  gradients,
   radius,
 } from "@shared/designSystem";
 import {
@@ -41,7 +45,7 @@ import {
   HeaderIconButton,
   type TimelineStep,
 } from "@shared/ui";
-import { useStudents, useTrips } from "@modules/trip/hooks/useTrips";
+import { useTrips } from "@modules/trip/hooks/useTrips";
 import { Trip, TripStop } from "@modules/trip/types";
 import { DEMO_COORD, todayISO } from "@modules/trip/utils";
 
@@ -77,7 +81,6 @@ export default function ParentTrackScreen() {
     date,
     status: "in_progress",
   });
-  const students = useStudents();
   const trips = useMemo(() => data?.data ?? [], [data]);
 
   const { trip, myStop } = useMemo(() => {
@@ -89,6 +92,9 @@ export default function ParentTrackScreen() {
     }
     return { trip: null as Trip | null, myStop: null as TripStop | null };
   }, [trips, userId]);
+
+  // Pickup point comes from the child's detail (reliably carries pickupPoint).
+  const stopChild = useStudent(myStop?.studentId || "");
 
   const [socketFrame, setSocketFrame] = useState<VehicleFrame | null>(null);
   const lastKnown = useTripPosition(trip?.id);
@@ -104,18 +110,10 @@ export default function ParentTrackScreen() {
   }, [trip?.id]);
 
   const pickup = useMemo(() => {
-    if (!myStop) return null;
-    const child = (students.data?.data ?? []).find(
-      (s) => s.id === myStop.studentId,
-    );
-    if (!child?.pickupPoint || typeof child.pickupPoint.lat !== "number")
-      return null;
-    return {
-      lat: child.pickupPoint.lat,
-      lng: child.pickupPoint.lng,
-      name: child.name,
-    };
-  }, [myStop, students.data]);
+    const pp = stopChild.data?.pickupPoint;
+    if (!myStop || !pp || typeof pp.lat !== "number") return null;
+    return { lat: pp.lat, lng: pp.lng, name: myStop.studentName };
+  }, [myStop, stopChild.data]);
 
   const markers: MapMarker[] = useMemo(() => {
     const m: MapMarker[] = [];
@@ -254,18 +252,27 @@ function TrackContent({
       refreshing={refreshing}
       onRefresh={onRefresh}
     >
-      {/* Light status banner */}
-      <View style={styles.banner}>
-        <VStack gap={4} flex={1}>
-          <Text variant="h1" tone="primary">
-            {meta.label}
-          </Text>
-          <Text variant="body-sm" tone="tertiary">
-            {eta ||
-              (frame ? "Van is on the move" : "Waiting for the van's GPS…")}
-          </Text>
-        </VStack>
-        <BusScene size={94} />
+      {/* Status banner — the one thing a parent wants to know */}
+      <View style={styles.bannerWrap}>
+        <LinearGradient
+          colors={[...gradients.violet] as [string, string, ...string[]]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.banner}
+        >
+          <VStack gap={8} flex={1}>
+            <Text variant="display-sm" style={{ color: "#FFFFFF" }}>
+              {meta.label}
+            </Text>
+            <View style={styles.etaPill}>
+              <Navigation2 size={14} color="#FFFFFF" strokeWidth={2.4} />
+              <Text variant="label" weight="700" style={{ color: "#FFFFFF" }}>
+                {eta || (frame ? "Van is on the move" : "Waiting for GPS…")}
+              </Text>
+            </View>
+          </VStack>
+          <BusScene size={100} />
+        </LinearGradient>
       </View>
 
       {/* Driver row */}
@@ -297,7 +304,7 @@ function TrackContent({
                 onPress={() => Linking.openURL(`tel:${child.driverMobile}`)}
                 style={styles.callBtn}
               >
-                <Phone size={18} color={accent.main} strokeWidth={2.2} />
+                <Phone size={18} color={tints.green.icon} strokeWidth={2.3} />
               </Pressable>
             ) : null}
           </HStack>
@@ -308,17 +315,22 @@ function TrackContent({
       <View style={styles.mapWrap}>
         <LiveMap markers={markers} center={center} height={300} />
         <View style={styles.callout} pointerEvents="none">
-          <Text variant="caption" tone="tertiary">
-            Pickup Point
-          </Text>
-          <Text variant="label" weight="700" tone="primary" numberOfLines={1}>
-            {pickupName}
-          </Text>
-          {child?.pickupTime ? (
+          <View style={styles.calloutPin}>
+            <MapPin size={14} color="#EF4444" strokeWidth={2.4} />
+          </View>
+          <VStack gap={1} flex={1}>
             <Text variant="caption" tone="tertiary">
-              {child.pickupTime}
+              Pickup Point
             </Text>
-          ) : null}
+            <Text variant="label" weight="700" tone="primary" numberOfLines={1}>
+              {pickupName}
+            </Text>
+            {child?.pickupTime ? (
+              <Text variant="caption" tone="tertiary">
+                {child.pickupTime}
+              </Text>
+            ) : null}
+          </VStack>
         </View>
       </View>
       {frame ? (
@@ -412,7 +424,11 @@ function VerticalTimeline({ steps }: { steps: TimelineStep[] }) {
                 />
               ) : null}
             </View>
-            <VStack gap={1} style={{ flex: 1, paddingBottom: last ? 0 : 20 }}>
+            <HStack
+              justify="space-between"
+              align="center"
+              style={{ flex: 1, paddingBottom: last ? 0 : 22 }}
+            >
               <Text
                 variant="label-lg"
                 weight={active ? "700" : "600"}
@@ -420,10 +436,16 @@ function VerticalTimeline({ steps }: { steps: TimelineStep[] }) {
               >
                 {s.label}
               </Text>
-              <Text variant="body-sm" tone="tertiary">
+              <Text
+                variant="body-sm"
+                weight={active ? "700" : "500"}
+                style={{
+                  color: on ? palette.text.secondary : palette.text.tertiary,
+                }}
+              >
                 {s.time || "—"}
               </Text>
-            </VStack>
+            </HStack>
           </HStack>
         );
       })}
@@ -432,20 +454,29 @@ function VerticalTimeline({ steps }: { steps: TimelineStep[] }) {
 }
 
 const styles = StyleSheet.create({
+  bannerWrap: { borderRadius: radius.xl, overflow: "hidden" },
   banner: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: accent.soft,
-    borderRadius: radius.lg,
-    paddingLeft: 18,
+    paddingLeft: 20,
     paddingRight: 12,
-    paddingVertical: 8,
+    paddingVertical: 14,
+  },
+  etaPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(255,255,255,0.18)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: radius.full,
   },
   callBtn: {
     width: 42,
     height: 42,
     borderRadius: radius.full,
-    backgroundColor: accent.soft,
+    backgroundColor: tints.green.bg,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -459,16 +490,28 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 12,
     right: 12,
+    zIndex: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
     backgroundColor: palette.surface.primary,
     borderRadius: radius.md,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    maxWidth: 180,
+    paddingVertical: 9,
+    maxWidth: 200,
     shadowColor: "#101828",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  calloutPin: {
+    width: 26,
+    height: 26,
+    borderRadius: radius.sm,
+    backgroundColor: "#FEECEB",
+    alignItems: "center",
+    justifyContent: "center",
   },
   liveDot: {
     width: 8,
@@ -516,19 +559,19 @@ function buildSteps(trip: Trip, stop: TripStop): TimelineStep[] {
   const raw: TimelineStep[] = [
     {
       key: "start",
-      label: "Trip started",
+      label: "Trip Started",
       state: trip.startedAt ? "done" : "pending",
       time: time(trip.startedAt),
     },
     {
       key: "arrive",
-      label: "Van arriving at pickup",
+      label: "Vehicle Arriving",
       state: arrivedOrLater ? "done" : "pending",
       time: time(stop.arrivedAt),
     },
     {
       key: "board",
-      label: isDrop ? "Dropped home safely" : "Boarded the van",
+      label: isDrop ? "Dropped Home" : "On Board",
       state: boarded ? "done" : "pending",
       time: time(stop.completedAt),
       tint: s === "no_show" ? "red" : undefined,
@@ -536,13 +579,13 @@ function buildSteps(trip: Trip, stop: TripStop): TimelineStep[] {
     isDrop
       ? {
           key: "done",
-          label: "Trip completed",
+          label: "Trip Completed",
           state: trip.completedAt ? "done" : "pending",
           time: time(trip.completedAt),
         }
       : {
           key: "school",
-          label: "Reached school safely",
+          label: "Reached School",
           state: trip.reachedSchoolAt ? "done" : "pending",
           time: time(trip.reachedSchoolAt),
         },
