@@ -6,6 +6,7 @@ import {
   StyleProp,
   ViewStyle,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { palette, layout } from "../designSystem";
 import { useBottomPadding } from "./useBottomPadding";
 import { AppHeader } from "./AppHeader";
@@ -47,7 +48,16 @@ export function Screen({
   children,
 }: Props) {
   const bottom = useBottomPadding(32);
-  const hasHeader = Boolean(title || right || onBack || left);
+  // A screen's own onBack wins; otherwise fall back to the real navigator's
+  // back (present on any pushed sub-screen — also drives Android hardware-back).
+  const navigation = useNavigation<{
+    canGoBack: () => boolean;
+    goBack: () => void;
+  }>();
+  const canGoBack = navigation.canGoBack?.() ?? false;
+  const backHandler =
+    onBack ?? (canGoBack ? () => navigation.goBack() : undefined);
+  const hasHeader = Boolean(title || right || backHandler || left);
 
   const inner = (
     <View
@@ -71,7 +81,7 @@ export function Screen({
           title={title}
           subtitle={subtitle}
           overline={overline}
-          onBack={onBack}
+          onBack={backHandler}
           left={left}
           right={right}
         />
