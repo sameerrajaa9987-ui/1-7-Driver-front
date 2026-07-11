@@ -25,6 +25,7 @@ import {
   ChevronDown,
   CalendarDays,
   BellRing,
+  Bell,
   Check,
 } from "lucide-react-native";
 import { emitSocket, onSocket } from "@shared/api/socket";
@@ -32,6 +33,7 @@ import { useAuthStore } from "@shared/store/useAuthStore";
 import { useStudents } from "@modules/student/hooks/useStudents";
 import { useTrips } from "@modules/trip/hooks/useTrips";
 import { useTripPosition } from "@modules/tracking/hooks/useTracking";
+import { useUnreadCount } from "@modules/notification/hooks/useNotifications";
 import { useTriggerSos } from "@modules/sos/hooks/useSos";
 import { useSectionNav } from "@navigation/AppNavigator";
 import { palette, radius, gradients, accent } from "@shared/designSystem";
@@ -43,6 +45,7 @@ import {
   Card,
   Avatar,
   BusScene,
+  HeaderIconButton,
 } from "@shared/ui";
 import { mediaUrl } from "@shared/media";
 import { Trip, TripStop } from "@modules/trip/types";
@@ -117,6 +120,7 @@ export default function ParentDashboardScreen() {
   }, [trips, child]);
 
   const sos = useTriggerSos();
+  const unread = useUnreadCount();
 
   // Live GPS frame for the ETA — socket push, seeded/fallen-back by a GET so it
   // shows the moment the screen opens mid-trip.
@@ -214,6 +218,13 @@ export default function ParentDashboardScreen() {
   return (
     <Screen
       title="Dashboard"
+      right={
+        <HeaderIconButton
+          icon={Bell}
+          badge={(unread.data ?? 0) > 0 ? unread.data : undefined}
+          onPress={() => go("Notifications")}
+        />
+      }
       refreshing={childrenQuery.isLoading || tripsQuery.isRefetching}
       onRefresh={() => {
         childrenQuery.refetch();

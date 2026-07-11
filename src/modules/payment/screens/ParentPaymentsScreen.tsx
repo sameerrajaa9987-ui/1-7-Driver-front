@@ -1,13 +1,15 @@
 /**
- * ParentPaymentsScreen — client-kit Fees screen: Paid (green) / Pending
- * (orange) summary cards, a "This Month Fee" card per child with Due Date and
- * a violet Pay Now button, then Recent Transactions as icon-tile rows.
+ * ParentPaymentsScreen — "Fees & Payments" (client mockup): an Overview /
+ * Transactions segmented control; Overview shows Paid/Pending summary cards, a
+ * "This Month Fee" card per child with Due Date + Pay Now, and Recent
+ * Transactions (with View All). Transactions shows the full history.
  */
 import React, { useState } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, Pressable, StyleSheet } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import {
   ReceiptIndianRupee,
+  ReceiptText,
   ShieldCheck,
   Clock,
   CreditCard,
@@ -23,7 +25,7 @@ import {
   useConfirmTestPayment,
 } from "@modules/payment/hooks/usePayments";
 import { Payment, PaymentStatus } from "@modules/payment/types";
-import { palette, radius, tints, accent, Accent } from "@shared/designSystem";
+import { palette, radius, tints, accent } from "@shared/designSystem";
 import {
   Screen,
   Text,
@@ -31,37 +33,30 @@ import {
   HStack,
   Card,
   Button,
-  StatusChip,
   EmptyState,
+  HeaderIconButton,
 } from "@shared/ui";
 
 const money = (n: number) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 
-/** Current month as YYYY-MM (local). */
 function currentMonth(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
-
-/** "2026-08" → "August" for friendly copy. */
 function monthName(ym: string): string {
   const [y, m] = ym.split("-").map(Number);
   if (!y || !m) return ym;
   return new Date(y, m - 1, 1).toLocaleString("en-US", { month: "long" });
 }
-
-/** Due date like "5 Aug" from the student's due day-of-month. */
 function dueLabel(day: number, ym: string): string {
   const [y, m] = ym.split("-").map(Number);
   const d = new Date(y, (m || 1) - 1, Math.max(1, day || 5));
-  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+  return d.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
-
-const STATUS_TONE: Record<PaymentStatus, "warning" | "success" | "danger"> = {
-  pending: "warning",
-  verified: "success",
-  rejected: "danger",
-};
 
 const STATUS_LABEL: Record<PaymentStatus, string> = {
   pending: "Pending",
@@ -76,7 +71,6 @@ interface StudentLite {
   dueDate?: number;
 }
 
-/** The parent's own children (the API scopes /students to the parent). */
 function useMyChildren() {
   return useQuery({
     queryKey: ["students", "my-children"],
@@ -91,96 +85,150 @@ function useMyChildren() {
 }
 
 export default function ParentPaymentsScreen() {
+  const [tab, setTab] = useState<"overview" | "transactions">("overview");
   const { data, isLoading, refetch, isRefetching } = usePayments({ limit: 50 });
   const { data: children } = useMyChildren();
   const payments = data?.data ?? [];
 
-  const paid = payments
-    .filter((p) => p.status === "verified")
-    .reduce((sum, p) => sum + (p.amount || 0), 0);
+  const thisMonth = currentMonth();
+  const paidThisMonth = payments
+    .filter((p) => p.status === "verified" && p.forMonth === thisMonth)
+    .reduce((s, p) => s + (p.amount || 0), 0);
   const pending = payments
     .filter((p) => p.status === "pending")
-    .reduce((sum, p) => sum + (p.amount || 0), 0);
+    .reduce((s, p) => s + (p.amount || 0), 0);
+
+  const recent = payments.slice(0, 3);
 
   return (
     <Screen
       title="Fees & Payments"
+      right={
+        <HeaderIconButton
+          icon={ReceiptText}
+          onPress={() => setTab("transactions")}
+        />
+      }
       refreshing={isRefetching}
       onRefresh={refetch}
     >
-      {/* Paid / Pending summary — soft green + orange cards per the kit */}
-      <HStack gap={12}>
-        <View style={[styles.summary, { backgroundColor: tints.green.bg }]}>
-          <View style={[styles.summaryIcon, { backgroundColor: "#FFFFFF" }]}>
-            <ShieldCheck size={16} color={tints.green.icon} strokeWidth={2.1} />
-          </View>
-          <Text variant="h3" style={{ color: tints.green.fg, marginTop: 10 }}>
-            {money(paid)}
-          </Text>
-          <Text variant="body-sm" style={{ color: tints.green.fg }}>
-            Paid
-          </Text>
-        </View>
-        <View style={[styles.summary, { backgroundColor: tints.amber.bg }]}>
-          <View style={[styles.summaryIcon, { backgroundColor: "#FFFFFF" }]}>
-            <Clock size={16} color={tints.amber.icon} strokeWidth={2.1} />
-          </View>
-          <Text variant="h3" style={{ color: tints.amber.fg, marginTop: 10 }}>
-            {money(pending)}
-          </Text>
-          <Text variant="body-sm" style={{ color: tints.amber.fg }}>
-            Pending
-          </Text>
-        </View>
-      </HStack>
+      {/* Segmented control */}
+      <View style={styles.segment}>
+        {(["overview", "transactions"] as const).map((k) => {
+          const active = tab === k;
+          return (
+            <Pressable
+              key={k}
+              onPress={() => setTab(k)}
+              style={[
+                styles.segmentBtn,
+                active && { backgroundColor: accent.main },
+              ]}
+            >
+              <Text
+                variant="label"
+                weight="700"
+                style={{ color: active ? "#FFFFFF" : palette.text.secondary }}
+              >
+                {k === "overview" ? "Overview" : "Transactions"}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
 
-      {/* This-month fee card per child, violet Pay Now */}
-      {(children ?? []).length > 0 ? (
-        <VStack gap={12} style={{ marginTop: 16 }}>
-          {(children ?? []).map((c) => (
-            <PayOnlineCard key={c.id} child={c} accent={accent} />
-          ))}
-        </VStack>
-      ) : null}
+      {tab === "overview" ? (
+        <>
+          {/* Paid / Pending */}
+          <HStack gap={12} style={{ marginTop: 16 }}>
+            <View style={[styles.summary, { backgroundColor: tints.green.bg }]}>
+              <Text variant="h2" style={{ color: tints.green.fg }}>
+                {money(paidThisMonth)}
+              </Text>
+              <Text variant="body-sm" style={{ color: tints.green.fg }}>
+                Paid (This Month)
+              </Text>
+            </View>
+            <View style={[styles.summary, { backgroundColor: tints.amber.bg }]}>
+              <Text variant="h2" style={{ color: tints.amber.fg }}>
+                {money(pending)}
+              </Text>
+              <Text variant="body-sm" style={{ color: tints.amber.fg }}>
+                Pending
+              </Text>
+            </View>
+          </HStack>
 
-      <Text
-        variant="h3"
-        tone="primary"
-        style={{ marginTop: 24, marginBottom: 12 }}
-      >
-        Recent Transactions
-      </Text>
-      {payments.length === 0 ? (
-        <EmptyState
-          icon={ReceiptIndianRupee}
-          title={isLoading ? "Loading…" : "No payments yet"}
-          message="Your fee payments and receipts will appear here."
-        />
+          {/* This Month Fee per child */}
+          <VStack gap={12} style={{ marginTop: 16 }}>
+            {(children ?? []).map((c) => (
+              <PayOnlineCard key={c.id} child={c} />
+            ))}
+          </VStack>
+
+          {/* Recent Transactions + View All */}
+          <HStack
+            align="center"
+            justify="space-between"
+            style={{ marginTop: 26, marginBottom: 12 }}
+          >
+            <Text variant="h3" tone="primary">
+              Recent Transactions
+            </Text>
+            {payments.length > 3 ? (
+              <Pressable onPress={() => setTab("transactions")}>
+                <Text
+                  variant="label"
+                  weight="700"
+                  style={{ color: accent.main }}
+                >
+                  View All
+                </Text>
+              </Pressable>
+            ) : null}
+          </HStack>
+          {recent.length === 0 ? (
+            <EmptyState
+              icon={ReceiptIndianRupee}
+              title={isLoading ? "Loading…" : "No payments yet"}
+              message="Your fee payments and receipts will appear here."
+            />
+          ) : (
+            <VStack gap={10}>
+              {recent.map((p) => (
+                <TransactionRow key={p.id} payment={p} />
+              ))}
+            </VStack>
+          )}
+        </>
       ) : (
-        <VStack gap={10}>
-          {payments.map((p) => (
-            <TransactionRow key={p.id} payment={p} />
-          ))}
-        </VStack>
+        <View style={{ marginTop: 16 }}>
+          {payments.length === 0 ? (
+            <EmptyState
+              icon={ReceiptIndianRupee}
+              title={isLoading ? "Loading…" : "No payments yet"}
+              message="Your fee payments and receipts will appear here."
+            />
+          ) : (
+            <VStack gap={10}>
+              {payments.map((p) => (
+                <TransactionRow key={p.id} payment={p} />
+              ))}
+            </VStack>
+          )}
+        </View>
       )}
     </Screen>
   );
 }
 
-function PayOnlineCard({
-  child,
-  accent,
-}: {
-  child: StudentLite;
-  accent: Accent;
-}) {
+function PayOnlineCard({ child }: { child: StudentLite }) {
   const forMonth = currentMonth();
   const { data: preview } = useProrationPreview(child.id, forMonth);
   const createOrder = useCreateOnlineOrder();
   const confirmTest = useConfirmTestPayment();
   const [receipt, setReceipt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
   const busy = createOrder.isPending || confirmTest.isPending;
 
   const pay = () => {
@@ -189,10 +237,6 @@ function PayOnlineCard({
       { studentId: child.id, forMonth },
       {
         onSuccess: (order) => {
-          // In dev testMode is true (no real Razorpay keys), so we confirm the
-          // order immediately via the test endpoint. If testMode were false we
-          // would open Razorpay Checkout with order.keyId / order.orderId here
-          // and confirm on the checkout success callback instead.
           if (order.testMode) {
             confirmTest.mutate(
               { orderId: order.orderId },
@@ -219,67 +263,57 @@ function PayOnlineCard({
           borderColor: tints.green.ring,
         }}
       >
-        <VStack gap={8}>
-          <HStack gap={8} align="center">
-            <CheckCircle2
-              size={18}
-              color={tints.green.icon}
-              strokeWidth={2.2}
-            />
-            <Text variant="label-lg" style={{ color: tints.green.fg }}>
-              Payment successful
-            </Text>
-          </HStack>
-          <Text variant="body-sm" style={{ color: tints.green.fg }}>
-            {child.name}&apos;s fee for {monthName(forMonth)} is paid via
-            Razorpay · Receipt {receipt}
+        <HStack gap={8} align="center">
+          <CheckCircle2 size={18} color={tints.green.icon} strokeWidth={2.2} />
+          <Text variant="body-sm" style={{ color: tints.green.fg, flex: 1 }}>
+            {child.name}&apos;s {monthName(forMonth)} fee is paid · Receipt{" "}
+            {receipt}
           </Text>
-        </VStack>
+        </HStack>
       </Card>
     );
   }
 
   const amount = preview?.amount ?? child.monthlyFee;
-
   return (
     <Card>
-      <VStack gap={12}>
-        <HStack align="center" justify="space-between">
-          <VStack gap={2} flex={1}>
-            <Text variant="body-sm" tone="tertiary">
-              This Month Fee · {child.name}
-            </Text>
-            <Text variant="h2" tone="primary">
-              {amount != null ? money(amount) : "—"}
-            </Text>
-          </VStack>
-          <HStack gap={6} align="center">
+      <HStack align="center" justify="space-between">
+        <VStack gap={2} flex={1}>
+          <Text variant="body-sm" tone="tertiary">
+            This Month Fee · {child.name}
+          </Text>
+          <Text variant="h2" tone="primary">
+            {amount != null ? money(amount) : "—"}
+          </Text>
+        </VStack>
+        <VStack gap={2} align="flex-end">
+          <Text variant="caption" tone="tertiary">
+            Due Date
+          </Text>
+          <HStack gap={5} align="center">
             <CalendarDays
-              size={14}
+              size={13}
               color={palette.text.tertiary}
               strokeWidth={2}
             />
-            <Text variant="body-sm" tone="tertiary">
-              Due {dueLabel(child.dueDate ?? 5, forMonth)}
+            <Text variant="label" weight="600" tone="primary">
+              {dueLabel(child.dueDate ?? 5, forMonth)}
             </Text>
           </HStack>
-        </HStack>
-        {error ? (
-          <Text variant="body-sm" tone="danger">
-            {error}
-          </Text>
-        ) : null}
-        <Button
-          label="Pay Now"
-          tint={accent.main}
-          icon={<CreditCard size={16} color="#FFFFFF" strokeWidth={2} />}
-          loading={busy}
-          onPress={pay}
-        />
-        <Text variant="caption" tone="tertiary" align="center">
-          Secured online payment via Razorpay
+        </VStack>
+      </HStack>
+      {error ? (
+        <Text variant="body-sm" tone="danger" style={{ marginTop: 8 }}>
+          {error}
         </Text>
-      </VStack>
+      ) : null}
+      <Button
+        label="Pay Now"
+        loading={busy}
+        icon={<CreditCard size={16} color="#FFFFFF" strokeWidth={2} />}
+        onPress={pay}
+        style={{ marginTop: 14 }}
+      />
     </Card>
   );
 }
@@ -297,6 +331,16 @@ function TransactionRow({ payment }: { payment: Payment }) {
       : payment.status === "pending"
         ? Clock
         : XCircle;
+  const dateStr = payment.paidAt
+    ? new Date(payment.paidAt).toLocaleString("en-IN", {
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : payment.forMonth
+      ? monthName(payment.forMonth)
+      : "";
 
   return (
     <Card>
@@ -306,45 +350,53 @@ function TransactionRow({ payment }: { payment: Payment }) {
         </View>
         <VStack gap={2} flex={1}>
           <Text variant="label-lg" tone="primary">
-            {money(payment.amount)}
-          </Text>
-          <Text variant="body-sm" tone="tertiary" numberOfLines={1}>
             {payment.mode === "cash"
-              ? "Cash"
+              ? "Cash Payment"
               : payment.mode === "online"
-                ? "Online · Razorpay"
-                : "Transfer"}
-            {payment.forMonth ? ` · ${monthName(payment.forMonth)}` : ""}
-            {payment.status === "verified" && payment.receiptNumber
-              ? ` · ${payment.receiptNumber}`
-              : ""}
+                ? "Online Payment"
+                : "Bank Transfer"}
+          </Text>
+          <Text variant="body-sm" weight="600" style={{ color: t.fg }}>
+            {STATUS_LABEL[payment.status]}
           </Text>
         </VStack>
-        <StatusChip
-          label={STATUS_LABEL[payment.status]}
-          tone={STATUS_TONE[payment.status]}
-        />
+        <VStack gap={2} align="flex-end">
+          <Text variant="label-lg" weight="700" tone="primary">
+            {money(payment.amount)}
+          </Text>
+          <Text variant="caption" tone="tertiary" numberOfLines={1}>
+            {dateStr}
+          </Text>
+        </VStack>
       </HStack>
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
+  segment: {
+    flexDirection: "row",
+    backgroundColor: palette.surface.secondary,
+    borderRadius: radius.full,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: palette.border.default,
+  },
+  segmentBtn: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 9,
+    borderRadius: radius.full,
+  },
   summary: {
     flex: 1,
     borderRadius: radius.lg,
-    padding: 14,
-  },
-  summaryIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: radius.sm,
-    alignItems: "center",
-    justifyContent: "center",
+    padding: 16,
   },
   txIcon: {
-    width: 38,
-    height: 38,
+    width: 40,
+    height: 40,
     borderRadius: radius.md,
     alignItems: "center",
     justifyContent: "center",

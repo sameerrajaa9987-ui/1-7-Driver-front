@@ -29,6 +29,7 @@ import {
   StatusChip,
   ChipsRow,
   EmptyState,
+  HeaderIconButton,
 } from "@shared/ui";
 
 const STATUS_TONE: Record<
@@ -71,12 +72,10 @@ export default function StudentsScreen() {
         onRefresh={refetch}
         right={
           canAdd ? (
-            <Button
-              label="Add Child"
-              size="sm"
-              fullWidth={false}
-              tint={accent.main}
-              icon={<Plus size={16} color="#FFFFFF" strokeWidth={2.2} />}
+            <HeaderIconButton
+              icon={Plus}
+              filled
+              tint
               onPress={() => navigation.navigate("StudentForm")}
             />
           ) : undefined

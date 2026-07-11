@@ -21,7 +21,14 @@ import {
 } from "@modules/notification/hooks/useNotifications";
 import { Notification } from "@modules/notification/api/notificationApi";
 import { palette, radius, outline, tints, accent } from "@shared/designSystem";
-import { Screen, Text, VStack, HStack, Button, EmptyState } from "@shared/ui";
+import {
+  Screen,
+  Text,
+  VStack,
+  HStack,
+  EmptyState,
+  HeaderIconButton,
+} from "@shared/ui";
 
 function timeAgo(iso: string) {
   const then = new Date(iso).getTime();
@@ -111,19 +118,9 @@ export default function NotificationsScreen() {
       onRefresh={refetch}
       right={
         hasUnread ? (
-          <Button
-            label="Mark all read"
-            variant="secondary"
-            size="sm"
-            fullWidth={false}
-            icon={
-              <CheckCheck
-                size={16}
-                color={palette.text.primary}
-                strokeWidth={2}
-              />
-            }
-            loading={markAll.isPending}
+          <HeaderIconButton
+            icon={CheckCheck}
+            tint
             onPress={() => markAll.mutate()}
           />
         ) : undefined

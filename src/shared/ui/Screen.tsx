@@ -14,8 +14,10 @@ interface Props {
   title?: string;
   subtitle?: string;
   overline?: string;
-  /** iOS-style circular chevron back button in the fixed header. */
+  /** Plain back chevron in the fixed header. */
   onBack?: () => void;
+  /** Custom left control (overrides the back chevron). */
+  left?: React.ReactNode;
   right?: React.ReactNode;
   scroll?: boolean;
   refreshing?: boolean;
@@ -36,6 +38,7 @@ export function Screen({
   subtitle,
   overline,
   onBack,
+  left,
   right,
   scroll = true,
   refreshing,
@@ -44,7 +47,7 @@ export function Screen({
   children,
 }: Props) {
   const bottom = useBottomPadding(32);
-  const hasHeader = Boolean(title || right || onBack);
+  const hasHeader = Boolean(title || right || onBack || left);
 
   const inner = (
     <View
@@ -69,6 +72,7 @@ export function Screen({
           subtitle={subtitle}
           overline={overline}
           onBack={onBack}
+          left={left}
           right={right}
         />
       ) : null}
