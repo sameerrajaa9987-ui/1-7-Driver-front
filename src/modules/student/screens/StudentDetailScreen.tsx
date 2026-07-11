@@ -4,7 +4,7 @@
  * Bus Pass tab bar. Overview carries Contact & Pickup and Transport Details;
  * the other tabs hold the attendance rollup, payment rollup and QR bus pass.
  */
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   Pressable,
@@ -12,6 +12,7 @@ import {
   Alert,
   Image,
   Linking,
+  Modal,
   StyleSheet,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -42,8 +43,10 @@ import { useStudentPaymentSummary } from "@modules/payment/hooks/usePayments";
 import { useDrivers } from "@modules/driver/hooks/useDrivers";
 import { useVehicles } from "@modules/vehicle/hooks/useVehicles";
 import { useRoutes } from "@modules/route/hooks/useRoutes";
+import { useTrips } from "@modules/trip/hooks/useTrips";
+import { todayISO } from "@modules/trip/utils";
 import { useAuthStore } from "@shared/store/useAuthStore";
-import { palette, radius, accent } from "@shared/designSystem";
+import { palette, radius, accent, tints } from "@shared/designSystem";
 import { childAvatarSvg } from "@shared/avatars";
 import { mediaUrl } from "@shared/media";
 import {
@@ -67,12 +70,21 @@ const STATUS_TONE = {
   inactive: "neutral",
 } as const;
 
-type Tab = "overview" | "attendance" | "payments" | "buspass";
-const TABS: { key: Tab; label: string }[] = [
+type Tab =
+  "overview" | "attendance" | "payments" | "buspass" | "transport" | "journey";
+const DEFAULT_TABS: { key: Tab; label: string }[] = [
   { key: "overview", label: "Overview" },
   { key: "attendance", label: "Attendance" },
   { key: "payments", label: "Payments" },
   { key: "buspass", label: "Bus Pass" },
+];
+// Schools see no fees — Transport and Journey replace Payments/Bus Pass, and
+// the QR opens from a header button instead of a tab.
+const SCHOOL_TABS: { key: Tab; label: string }[] = [
+  { key: "overview", label: "Overview" },
+  { key: "attendance", label: "Attendance" },
+  { key: "transport", label: "Transport" },
+  { key: "journey", label: "Journey" },
 ];
 
 function confirm(msg: string, onYes: () => void) {
@@ -124,6 +136,29 @@ export default function StudentDetailScreen() {
 
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const admin = isAdmin();
+  const isSchool = useAuthStore((s) => s.user?.role) === "school";
+  const [qrOpen, setQrOpen] = useState(false);
+  const TABS = isSchool ? SCHOOL_TABS : DEFAULT_TABS;
+
+  // Live status for the header pill (school view mirrors the roster's).
+  const activeTrips = useTrips({
+    date: todayISO(),
+    status: "in_progress",
+  });
+  const liveStatus = useMemo(() => {
+    for (const t of activeTrips.data?.data ?? [])
+      for (const s of t.stops)
+        if (s.studentId === id) {
+          if (t.reachedSchoolAt)
+            return { label: "Reached School", tone: "info" as const };
+          if (s.status === "picked_up" || s.status === "dropped")
+            return { label: "On Board", tone: "info" as const };
+          if (s.status === "no_show")
+            return { label: "Absent", tone: "danger" as const };
+          return { label: "On the way", tone: "success" as const };
+        }
+    return null;
+  }, [activeTrips.data, id]);
 
   const { data: driversData } = useDrivers({ enabled: admin });
   const { data: vehiclesData } = useVehicles({ enabled: admin });
@@ -184,10 +219,14 @@ export default function StudentDetailScreen() {
                 {student?.name || "Student"}
               </Text>
               {student ? (
-                <StatusChip
-                  label={student.status}
-                  tone={STATUS_TONE[student.status]}
-                />
+                isSchool && liveStatus ? (
+                  <StatusChip label={liveStatus.label} tone={liveStatus.tone} />
+                ) : (
+                  <StatusChip
+                    label={student.status}
+                    tone={STATUS_TONE[student.status]}
+                  />
+                )
               ) : null}
             </HStack>
             {classLine ? (
@@ -195,7 +234,18 @@ export default function StudentDetailScreen() {
                 {classLine}
               </Text>
             ) : null}
-            {student?.driverMobile ? (
+            {isSchool ? (
+              <Pressable onPress={() => setQrOpen(true)} style={styles.callBtn}>
+                <QrCode size={13} color={accent.main} strokeWidth={2.2} />
+                <Text
+                  variant="label-sm"
+                  weight="700"
+                  style={{ color: accent.dark }}
+                >
+                  View Bus Pass (QR)
+                </Text>
+              </Pressable>
+            ) : student?.driverMobile ? (
               <Pressable
                 onPress={() => Linking.openURL(`tel:${student.driverMobile}`)}
                 style={styles.callBtn}
@@ -276,26 +326,28 @@ export default function StudentDetailScreen() {
             </VStack>
           </Card>
 
-          <Card>
-            <VStack gap={12}>
-              <Text variant="h4" tone="primary">
-                Transport Details
-              </Text>
-              <InfoRow icon={RouteIcon} label="Route" value={routeName} />
-              <InfoRow icon={UserCheck} label="Driver" value={driverName} />
-              <InfoRow icon={Bus} label="Vehicle" value={vehicleNumber} />
-              <InfoRow
-                icon={Wallet}
-                label="Monthly fee"
-                value={money(student?.monthlyFee ?? 0)}
-              />
-              <InfoRow
-                icon={CalendarClock}
-                label="Due day"
-                value={student?.dueDate ? String(student.dueDate) : null}
-              />
-            </VStack>
-          </Card>
+          {!isSchool ? (
+            <Card>
+              <VStack gap={12}>
+                <Text variant="h4" tone="primary">
+                  Transport Details
+                </Text>
+                <InfoRow icon={RouteIcon} label="Route" value={routeName} />
+                <InfoRow icon={UserCheck} label="Driver" value={driverName} />
+                <InfoRow icon={Bus} label="Vehicle" value={vehicleNumber} />
+                <InfoRow
+                  icon={Wallet}
+                  label="Monthly fee"
+                  value={money(student?.monthlyFee ?? 0)}
+                />
+                <InfoRow
+                  icon={CalendarClock}
+                  label="Due day"
+                  value={student?.dueDate ? String(student.dueDate) : null}
+                />
+              </VStack>
+            </Card>
+          ) : null}
 
           {admin && student?.status !== "inactive" ? (
             <VStack gap={12}>
@@ -325,6 +377,74 @@ export default function StudentDetailScreen() {
             </VStack>
           ) : null}
         </VStack>
+      ) : null}
+
+      {tab === "transport" ? (
+        <Card>
+          <VStack gap={12}>
+            <Text variant="h4" tone="primary">
+              Transport Details
+            </Text>
+            <InfoRow icon={RouteIcon} label="Route" value={routeName} />
+            <InfoRow icon={UserCheck} label="Driver" value={driverName} />
+            <InfoRow icon={Bus} label="Vehicle" value={vehicleNumber} />
+            <InfoRow icon={School} label="Pickup" value={student?.pickupTime} />
+            <InfoRow icon={School} label="Drop" value={student?.dropTime} />
+          </VStack>
+        </Card>
+      ) : null}
+
+      {tab === "journey" ? (
+        <Card>
+          <VStack gap={14}>
+            <Text variant="h4" tone="primary">
+              Today’s Journey
+            </Text>
+            {(attHistory?.data ?? []).length > 0 ? (
+              (attHistory?.data ?? []).map((r, i, arr) => {
+                const isPickup = r.type === "pickup";
+                return (
+                  <HStack key={r.id} gap={12} align="flex-start">
+                    <VStack align="center" gap={0}>
+                      <View
+                        style={[
+                          journeyStyles.dot,
+                          {
+                            backgroundColor: isPickup
+                              ? tints.teal.icon
+                              : tints.green.icon,
+                          },
+                        ]}
+                      />
+                      {i < arr.length - 1 ? (
+                        <View style={journeyStyles.line} />
+                      ) : null}
+                    </VStack>
+                    <VStack gap={1} flex={1} style={{ paddingBottom: 10 }}>
+                      <Text variant="label" weight="600" tone="primary">
+                        {isPickup ? "Picked up" : "Reached school"}
+                      </Text>
+                      <Text variant="caption" tone="tertiary">
+                        {new Date(r.createdAt).toLocaleString([], {
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                        {" · "}
+                        {r.method.toUpperCase()} verified
+                      </Text>
+                    </VStack>
+                  </HStack>
+                );
+              })
+            ) : (
+              <Text variant="body-sm" tone="tertiary">
+                No journey events recorded yet today.
+              </Text>
+            )}
+          </VStack>
+        </Card>
       ) : null}
 
       {tab === "attendance" ? (
@@ -460,6 +580,55 @@ export default function StudentDetailScreen() {
           </Card>
         )
       ) : null}
+
+      {/* Bus Pass QR modal (school header action) */}
+      <Modal
+        visible={qrOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setQrOpen(false)}
+      >
+        <Pressable style={styles.backdrop} onPress={() => setQrOpen(false)}>
+          <Pressable style={styles.qrSheet} onPress={() => {}}>
+            <Text variant="h3" tone="primary" align="center">
+              Bus Pass
+            </Text>
+            <Text
+              variant="body-sm"
+              tone="tertiary"
+              align="center"
+              style={{ marginTop: 2, marginBottom: 14 }}
+            >
+              {student?.name}
+            </Text>
+            {qr?.token ? (
+              <View style={styles.qrFrame}>
+                <Image
+                  source={{
+                    uri: `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
+                      qr.token,
+                    )}`,
+                  }}
+                  style={{ width: 240, height: 240 }}
+                  resizeMode="contain"
+                />
+              </View>
+            ) : (
+              <Text variant="body-sm" tone="tertiary" align="center">
+                No bus pass issued yet.
+              </Text>
+            )}
+            <Text
+              variant="caption"
+              tone="tertiary"
+              align="center"
+              style={{ marginTop: 12 }}
+            >
+              Show at pickup for verified attendance.
+            </Text>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </Screen>
   );
 }
@@ -507,5 +676,29 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: palette.border.default,
+  },
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(16,24,40,0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  qrSheet: {
+    backgroundColor: palette.surface.primary,
+    borderRadius: radius.lg,
+    padding: 22,
+    alignItems: "center",
+  },
+});
+
+const journeyStyles = StyleSheet.create({
+  dot: { width: 12, height: 12, borderRadius: 6, marginTop: 2 },
+  line: {
+    width: 2,
+    flex: 1,
+    minHeight: 24,
+    backgroundColor: palette.border.default,
+    marginTop: 2,
   },
 });

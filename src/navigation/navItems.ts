@@ -24,6 +24,7 @@ import {
   ScanLine,
   QrCode,
   CalendarCheck,
+  ClipboardList,
 } from "lucide-react-native";
 import type { Role } from "@shared/permissions";
 
@@ -60,6 +61,9 @@ import ActivityLogScreen from "@modules/activity-log/screens/ActivityLogScreen";
 import SubscriptionScreen from "@modules/subscription/screens/SubscriptionScreen";
 import SchoolDashboardScreen from "@modules/dashboard/screens/SchoolDashboardScreen";
 import AttendanceReportScreen from "@modules/attendance/screens/AttendanceReportScreen";
+import SchoolAttendanceScreen from "@modules/attendance/screens/SchoolAttendanceScreen";
+import SchoolReportsScreen from "@modules/reports/screens/SchoolReportsScreen";
+import SchoolSettingsScreen from "@modules/settings/screens/SchoolSettingsScreen";
 import MaintenanceScreen from "@modules/maintenance/screens/MaintenanceScreen";
 import BehaviourScreen from "@modules/telematics/screens/BehaviourScreen";
 import BranchesScreen from "@modules/branch/screens/BranchesScreen";
@@ -386,8 +390,15 @@ const SCHOOL: NavItem[] = [
     name: "Attendance",
     label: "Attendance",
     icon: ScanLine,
-    component: AttendanceReportScreen,
+    component: SchoolAttendanceScreen,
     primary: true,
+    tint: "violet",
+  },
+  {
+    name: "Trips",
+    label: "Trips",
+    icon: PlayCircle,
+    component: AdminTripsScreen,
     tint: "violet",
   },
   {
@@ -398,11 +409,25 @@ const SCHOOL: NavItem[] = [
     tint: "amber",
   },
   {
-    name: "Profile",
-    label: "Profile",
-    icon: User,
-    component: ProfileScreen,
-    tint: "teal",
+    name: "AttendanceReport",
+    label: "Attendance Report",
+    icon: CalendarCheck,
+    component: AttendanceReportScreen,
+    tint: "green",
+  },
+  {
+    name: "Reports",
+    label: "School Reports",
+    icon: ClipboardList,
+    component: SchoolReportsScreen,
+    tint: "blue",
+  },
+  {
+    name: "Settings",
+    label: "Settings",
+    icon: SettingsIcon,
+    component: SchoolSettingsScreen,
+    tint: "neutral",
   },
 ];
 

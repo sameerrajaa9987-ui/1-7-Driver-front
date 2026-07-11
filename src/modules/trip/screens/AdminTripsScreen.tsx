@@ -137,14 +137,17 @@ export default function AdminTripsScreen() {
         <VStack gap={12} style={{ marginTop: 16 }}>
           {filtered.map((t) => {
             const route = t.routeId ? routesById.get(t.routeId) : undefined;
-            const driverName = route?.driverId
-              ? driversById.get(route.driverId)
-              : undefined;
+            // Prefer the names the API denormalises onto the trip (works for
+            // read-only school viewers); fall back to the routes/drivers lookup.
+            const routeName = t.routeName || route?.name;
+            const driverName =
+              t.driverName ||
+              (route?.driverId ? driversById.get(route.driverId) : undefined);
             return (
               <TripBoardCard
                 key={t.id}
                 trip={t}
-                routeName={route?.name}
+                routeName={routeName}
                 driverName={driverName}
                 expanded={expandedId === t.id}
                 onPress={() =>

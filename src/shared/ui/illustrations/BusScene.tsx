@@ -22,12 +22,17 @@ export function BusScene({ size = 150 }: { size?: number }) {
           { width: disc, height: disc, borderRadius: disc / 2 },
         ]}
       />
-      <SvgXml xml={BUS} width={bus} height={bus} />
+      {/* zIndex keeps the art above the absolute disc on react-native-web,
+          where a positioned sibling otherwise paints over static children. */}
+      <View style={styles.art}>
+        <SvgXml xml={BUS} width={bus} height={bus} />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { alignItems: "center", justifyContent: "center" },
-  disc: { position: "absolute", backgroundColor: "#EEF2FF" },
+  disc: { position: "absolute", backgroundColor: "#EEF2FF", zIndex: 0 },
+  art: { zIndex: 1 },
 });

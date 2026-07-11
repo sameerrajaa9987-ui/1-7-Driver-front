@@ -61,6 +61,7 @@ export default function StudentsScreen() {
   const canAdd = hasPermission(PERMISSIONS.STUDENTS_ADD);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StudentStatus | "all">("all");
+  const [schoolFilter, setSchoolFilter] = useState("all");
 
   const { data, isLoading, refetch, isRefetching } = useStudents({
     search: search.trim() || undefined,
@@ -147,6 +148,108 @@ export default function StudentsScreen() {
                 live={liveByStudent[s.id]}
                 onPress={() =>
                   navigation.navigate("StudentDetail", { id: s.id })
+                }
+              />
+            ))}
+          </VStack>
+        )}
+      </Screen>
+    );
+  }
+
+  // Schools get a read-only roster filtered by LIVE status (On Board / Reached
+  // / Absent) — no lifecycle chips, no editing. Live status comes from today's
+  // in-progress trips (same [[liveByStudent]] map the parent cards use).
+  if (role === "school") {
+    const q = search.trim().toLowerCase();
+    const withStatus = students.map((s) => ({
+      student: s,
+      live: liveByStudent[s.id],
+    }));
+    const searched = q
+      ? withStatus.filter(
+          ({ student }) =>
+            student.name.toLowerCase().includes(q) ||
+            (student.className ?? "").toLowerCase().includes(q),
+        )
+      : withStatus;
+    const byKey = (key: string) =>
+      searched.filter(({ live }) => {
+        if (key === "onboard") return live?.label === "On Board";
+        if (key === "reached") return live?.label === "Reached School";
+        if (key === "absent") return live?.label === "Absent";
+        return true;
+      });
+    const CHIPS = [
+      { key: "all", label: "All", count: searched.length },
+      { key: "onboard", label: "On Board", count: byKey("onboard").length },
+      { key: "reached", label: "Reached", count: byKey("reached").length },
+      { key: "absent", label: "Absent", count: byKey("absent").length },
+    ];
+    const shown = byKey(schoolFilter);
+    return (
+      <Screen
+        title="Students"
+        refreshing={isRefetching || isLoading}
+        onRefresh={refetch}
+      >
+        <View style={styles.searchWrap}>
+          <Search size={18} color={palette.text.tertiary} strokeWidth={1.8} />
+          <TextInput
+            placeholder="Search students…"
+            placeholderTextColor={palette.text.tertiary}
+            value={search}
+            onChangeText={setSearch}
+            style={styles.searchInput}
+            autoCapitalize="none"
+          />
+        </View>
+
+        <HStack gap={8} style={{ marginTop: 14 }}>
+          {CHIPS.map((c) => {
+            const on = schoolFilter === c.key;
+            return (
+              <Pressable
+                key={c.key}
+                onPress={() => setSchoolFilter(c.key)}
+                style={[styles.statusChip, on && styles.statusChipOn]}
+              >
+                <Text
+                  variant="label-sm"
+                  weight="700"
+                  style={{ color: on ? "#FFFFFF" : palette.text.secondary }}
+                >
+                  {c.label}
+                </Text>
+                <View style={[styles.chipCount, on && styles.chipCountOn]}>
+                  <Text
+                    variant="caption"
+                    weight="700"
+                    style={{ color: on ? "#FFFFFF" : palette.text.tertiary }}
+                  >
+                    {c.count}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          })}
+        </HStack>
+
+        {shown.length === 0 ? (
+          <EmptyState
+            icon={GraduationCap}
+            title={isLoading ? "Loading…" : "No students here"}
+            message="Students matching this status will appear here."
+          />
+        ) : (
+          <VStack gap={12} style={{ marginTop: 16 }}>
+            {shown.map(({ student, live }) => (
+              <SchoolStudentRow
+                key={student.id}
+                student={student}
+                live={live}
+                onPress={() =>
+                  navigation.navigate("StudentDetail", { id: student.id })
                 }
               />
             ))}
@@ -305,6 +408,53 @@ function StudentRow({
           />
         </VStack>
         <ChevronRight size={18} color={palette.text.tertiary} strokeWidth={2} />
+      </HStack>
+    </Card>
+  );
+}
+
+/** School roster row — illustrated avatar, class, live status pill (read-only). */
+function SchoolStudentRow({
+  student,
+  live,
+  onPress,
+}: {
+  student: Student;
+  live?: LiveStatus;
+  onPress: () => void;
+}) {
+  return (
+    <Card onPress={onPress} elevation="base">
+      <HStack gap={14} align="center">
+        <Avatar
+          name={student.name}
+          size={46}
+          photo={student.photo ? mediaUrl(student.photo) : undefined}
+          svgXml={student.photo ? undefined : childAvatarSvg(student.id)}
+          seed={student.id}
+        />
+        <VStack gap={3} flex={1}>
+          <Text variant="label-lg" tone="primary" numberOfLines={1}>
+            {student.name}
+          </Text>
+          <Text variant="body-sm" tone="tertiary" numberOfLines={1}>
+            {[
+              student.className && `Class ${student.className}`,
+              student.section,
+            ]
+              .filter(Boolean)
+              .join(" - ")}
+          </Text>
+        </VStack>
+        {live ? (
+          <StatusChip label={live.label} tone={live.tone} />
+        ) : (
+          <ChevronRight
+            size={18}
+            color={palette.text.tertiary}
+            strokeWidth={2}
+          />
+        )}
       </HStack>
     </Card>
   );
@@ -554,4 +704,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 2,
   },
+  statusChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: palette.border.default,
+    backgroundColor: palette.surface.primary,
+  },
+  statusChipOn: { backgroundColor: accent.main, borderColor: accent.main },
+  chipCount: {
+    minWidth: 18,
+    paddingHorizontal: 4,
+    borderRadius: radius.full,
+    backgroundColor: palette.surface.secondary,
+    alignItems: "center",
+  },
+  chipCountOn: { backgroundColor: "rgba(255,255,255,0.22)" },
 });

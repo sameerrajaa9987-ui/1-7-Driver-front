@@ -8,7 +8,7 @@ import { View, StyleSheet } from "react-native";
 import { CalendarDays } from "lucide-react-native";
 import { useEarnings } from "@modules/earnings/hooks/useEarnings";
 import { EarningItem } from "@modules/earnings/types";
-import { palette, radius, tints, accent } from "@shared/designSystem";
+import { palette, radius, accent } from "@shared/designSystem";
 import {
   Screen,
   Text,

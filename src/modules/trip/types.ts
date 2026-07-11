@@ -26,7 +26,9 @@ export interface TripStop {
 export interface Trip {
   id: string;
   routeId: string | null;
+  routeName?: string;
   driverId: string | null;
+  driverName?: string;
   vehicleId: string | null;
   date: string;
   type: TripType;

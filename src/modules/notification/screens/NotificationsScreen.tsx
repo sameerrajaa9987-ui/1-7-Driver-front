@@ -20,6 +20,7 @@ import {
   useMarkRead,
 } from "@modules/notification/hooks/useNotifications";
 import { Notification } from "@modules/notification/api/notificationApi";
+import { useAuthStore } from "@shared/store/useAuthStore";
 import { palette, radius, outline, tints, accent } from "@shared/designSystem";
 import {
   Screen,
@@ -45,19 +46,33 @@ function timeAgo(iso: string) {
   });
 }
 
-type FilterKey = "all" | "trips" | "fees" | "others";
+type FilterKey = string;
 
-const FILTERS: { key: FilterKey; label: string }[] = [
+const DEFAULT_FILTERS: { key: FilterKey; label: string }[] = [
   { key: "all", label: "All" },
   { key: "trips", label: "Trips" },
   { key: "fees", label: "Fees" },
   { key: "others", label: "Others" },
 ];
 
-function bucket(n: Notification): Exclude<FilterKey, "all"> {
+// Schools never see fees — their alert stream is trips, emergencies and system.
+const SCHOOL_FILTERS: { key: FilterKey; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "trips", label: "Trip" },
+  { key: "sos", label: "SOS" },
+  { key: "system", label: "System" },
+];
+
+function bucket(n: Notification): string {
   if (n.type.startsWith("trip")) return "trips";
   if (n.type.startsWith("fee") || n.type.startsWith("payment")) return "fees";
   return "others";
+}
+
+function schoolBucket(n: Notification): string {
+  if (n.type === "sos") return "sos";
+  if (n.type.startsWith("trip")) return "trips";
+  return "system";
 }
 
 /** Icon + tint per notification type (mockup icon tiles). */
@@ -88,6 +103,9 @@ function dayLabel(iso: string): string {
 
 export default function NotificationsScreen() {
   const [filter, setFilter] = useState<FilterKey>("all");
+  const isSchool = useAuthStore((s) => s.user?.role) === "school";
+  const FILTERS = isSchool ? SCHOOL_FILTERS : DEFAULT_FILTERS;
+  const bucketOf = isSchool ? schoolBucket : bucket;
 
   const { data, isLoading, refetch, isRefetching } = useNotifications({
     limit: 50,
@@ -100,7 +118,7 @@ export default function NotificationsScreen() {
 
   const groups = useMemo(() => {
     const filtered =
-      filter === "all" ? items : items.filter((n) => bucket(n) === filter);
+      filter === "all" ? items : items.filter((n) => bucketOf(n) === filter);
     const out: { label: string; items: Notification[] }[] = [];
     for (const n of filtered) {
       const label = dayLabel(n.createdAt);
@@ -109,7 +127,7 @@ export default function NotificationsScreen() {
       else out.push({ label, items: [n] });
     }
     return out;
-  }, [items, filter]);
+  }, [items, filter, bucketOf]);
 
   return (
     <Screen
