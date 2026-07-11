@@ -10,7 +10,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ReceiptIndianRupee,
   ReceiptText,
-  ShieldCheck,
   Clock,
   CreditCard,
   CheckCircle2,

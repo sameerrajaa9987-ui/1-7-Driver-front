@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef } from "react";
-import { View } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { WebView } from "react-native-webview";
-import type { MapViewProps, MapMarker } from "./map.types";
+import { MapPin } from "lucide-react-native";
+import type { MapViewProps } from "./map.types";
 
 /**
  * Native map — Leaflet + OpenStreetMap inside a WebView. Runs everywhere
@@ -79,6 +80,7 @@ export default function LiveMap({
   zoom = 14,
   height = 260,
   onMarkerPress,
+  overlay,
 }: MapViewProps) {
   const webRef = useRef<WebView>(null);
 
@@ -139,6 +141,53 @@ export default function LiveMap({
         allowsInlineMediaPlayback
         style={{ flex: 1, backgroundColor: "transparent" }}
       />
+      {overlay ? (
+        <View style={ov.card} pointerEvents="none">
+          <View style={ov.pin}>
+            <MapPin size={14} color="#EF4444" strokeWidth={2.4} />
+          </View>
+          <View style={{ flexShrink: 1 }}>
+            <Text style={ov.title}>{overlay.title}</Text>
+            <Text style={ov.subtitle} numberOfLines={1}>
+              {overlay.subtitle}
+            </Text>
+            {overlay.caption ? (
+              <Text style={ov.title}>{overlay.caption}</Text>
+            ) : null}
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 }
+
+const ov = StyleSheet.create({
+  card: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    maxWidth: 210,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    shadowColor: "#101828",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  pin: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    backgroundColor: "#FEECEB",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  title: { fontSize: 11, color: "#667085" },
+  subtitle: { fontSize: 13, fontWeight: "700", color: "#101828" },
+});

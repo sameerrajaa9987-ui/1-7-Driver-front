@@ -28,8 +28,8 @@ import {
   Card,
   Button,
   TextField,
+  Avatar,
 } from "@shared/ui";
-import { placeholderPortrait } from "@shared/ui/Avatar";
 
 export default function StudentFormScreen() {
   const navigation = useNavigation<any>();
@@ -175,14 +175,18 @@ export default function StudentFormScreen() {
       <Card style={{ marginBottom: 16 }}>
         <HStack gap={16} align="center">
           <View>
-            <Image
-              source={{
-                uri: photo
-                  ? mediaUrl(photo)
-                  : placeholderPortrait(id || f.name || "new-child"),
-              }}
-              style={photoStyles.preview}
-            />
+            {photo ? (
+              <Image
+                source={{ uri: mediaUrl(photo) }}
+                style={photoStyles.preview}
+              />
+            ) : (
+              <Avatar
+                name={f.name || "New Child"}
+                seed={id || "new-child"}
+                size={72}
+              />
+            )}
             <Pressable
               onPress={pickPhoto}
               style={[photoStyles.badge, { backgroundColor: accent.main }]}

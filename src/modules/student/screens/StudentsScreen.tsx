@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { View, TextInput, StyleSheet, Pressable, Linking } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import {
@@ -13,6 +13,8 @@ import {
   Phone,
 } from "lucide-react-native";
 import { useStudents } from "@modules/student/hooks/useStudents";
+import { useTrips } from "@modules/trip/hooks/useTrips";
+import { todayISO } from "@modules/trip/utils";
 import { Student, StudentStatus } from "@modules/student/types";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { PERMISSIONS } from "@shared/permissions";
@@ -32,10 +34,13 @@ import {
   HeaderIconButton,
 } from "@shared/ui";
 
-const STATUS_TONE: Record<
-  StudentStatus,
-  "success" | "warning" | "danger" | "neutral"
-> = {
+type ChipTone = "success" | "warning" | "danger" | "info" | "neutral";
+interface LiveStatus {
+  label: string;
+  tone: ChipTone;
+}
+
+const STATUS_TONE: Record<StudentStatus, ChipTone> = {
   active: "success",
   pending: "warning",
   inactive: "neutral",
@@ -61,6 +66,30 @@ export default function StudentsScreen() {
     status: status === "all" ? undefined : status,
   });
   const students = data?.data ?? [];
+
+  // Live per-child status from today's in-progress trips (parent cards).
+  const activeTrips = useTrips({ date: todayISO(), status: "in_progress" });
+  const liveByStudent = useMemo(() => {
+    const map: Record<string, LiveStatus> = {};
+    for (const t of activeTrips.data?.data ?? []) {
+      for (const s of t.stops) {
+        let label = "On the way";
+        let tone: ChipTone = "success";
+        if (t.reachedSchoolAt) {
+          label = "Reached School";
+          tone = "info";
+        } else if (s.status === "picked_up" || s.status === "dropped") {
+          label = "On Board";
+          tone = "info";
+        } else if (s.status === "no_show") {
+          label = "Absent";
+          tone = "danger";
+        }
+        map[s.studentId] = { label, tone };
+      }
+    }
+    return map;
+  }, [activeTrips.data]);
 
   // Parents get the client-kit "My Children" view — one rich card per child
   // (photo, route/driver/vehicle, Call Driver) instead of an admin roster.
@@ -93,6 +122,7 @@ export default function StudentsScreen() {
               <ChildCard
                 key={s.id}
                 student={s}
+                live={liveByStudent[s.id]}
                 onPress={() =>
                   navigation.navigate("StudentDetail", { id: s.id })
                 }
@@ -212,9 +242,11 @@ function StudentRow({
 /** Client-kit child card — photo, class chip, transport rows, Call Driver. */
 function ChildCard({
   student,
+  live,
   onPress,
 }: {
   student: Student;
+  live?: LiveStatus;
   onPress: () => void;
 }) {
   const rows = [
@@ -253,8 +285,11 @@ function ChildCard({
           ) : null}
         </VStack>
         <StatusChip
-          label={student.status === "active" ? "Active" : student.status}
-          tone={STATUS_TONE[student.status]}
+          label={
+            live?.label ??
+            (student.status === "active" ? "Active" : student.status)
+          }
+          tone={live?.tone ?? STATUS_TONE[student.status]}
         />
       </HStack>
 

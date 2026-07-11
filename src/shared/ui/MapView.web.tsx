@@ -66,6 +66,7 @@ export default function LiveMap({
   zoom = 14,
   height = 260,
   onMarkerPress,
+  overlay,
 }: MapViewProps) {
   const divRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
@@ -176,15 +177,78 @@ export default function LiveMap({
   }, [JSON.stringify(markers), center?.lat, center?.lng]);
 
   return (
-    <div
-      ref={divRef}
-      style={{
-        height,
-        width: "100%",
-        borderRadius: 16,
-        overflow: "hidden",
-        border: "1px solid #E2E8F0",
-      }}
-    />
+    <div style={{ position: "relative", height, width: "100%" }}>
+      <div
+        ref={divRef}
+        style={{
+          height: "100%",
+          width: "100%",
+          borderRadius: 16,
+          overflow: "hidden",
+          border: "1px solid #E2E8F0",
+        }}
+      />
+      {overlay ? (
+        <div
+          style={{
+            position: "absolute",
+            top: 12,
+            right: 12,
+            zIndex: 1000,
+            display: "flex",
+            gap: 8,
+            alignItems: "center",
+            maxWidth: 210,
+            background: "#FFFFFF",
+            borderRadius: 12,
+            padding: "8px 12px",
+            boxShadow: "0 4px 14px rgba(16,24,40,0.14)",
+          }}
+        >
+          <div
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: 8,
+              background: "#FEECEB",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 2C8 2 5 5 5 9c0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7z"
+                fill="#EF4444"
+              />
+              <circle cx="12" cy="9" r="2.5" fill="#fff" />
+            </svg>
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 11, color: "#667085" }}>
+              {overlay.title}
+            </div>
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: "#101828",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {overlay.subtitle}
+            </div>
+            {overlay.caption ? (
+              <div style={{ fontSize: 11, color: "#667085" }}>
+                {overlay.caption}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }

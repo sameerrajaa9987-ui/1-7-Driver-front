@@ -16,7 +16,6 @@ import {
   RefreshCw,
   Check,
   Navigation2,
-  MapPin,
 } from "lucide-react-native";
 import { emitSocket, onSocket } from "@shared/api/socket";
 import LiveMap from "@shared/ui/MapView";
@@ -241,9 +240,13 @@ function TrackContent({
     }
   };
 
-  const pickupName = child?.homeAddress
-    ? child.homeAddress.split(",")[0]
-    : "Pickup point";
+  // Prefer a readable area name over a bare house number.
+  const addrParts = (child?.homeAddress || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const pickupName =
+    addrParts.find((s) => !/^\d+$/.test(s)) || addrParts[0] || "Pickup point";
 
   return (
     <Screen
@@ -311,27 +314,18 @@ function TrackContent({
         </Card>
       ) : null}
 
-      {/* Map with pickup callout */}
+      {/* Map with route line, bus + destination pins, and a pickup callout */}
       <View style={styles.mapWrap}>
-        <LiveMap markers={markers} center={center} height={300} />
-        <View style={styles.callout} pointerEvents="none">
-          <View style={styles.calloutPin}>
-            <MapPin size={14} color="#EF4444" strokeWidth={2.4} />
-          </View>
-          <VStack gap={1} flex={1}>
-            <Text variant="caption" tone="tertiary">
-              Pickup Point
-            </Text>
-            <Text variant="label" weight="700" tone="primary" numberOfLines={1}>
-              {pickupName}
-            </Text>
-            {child?.pickupTime ? (
-              <Text variant="caption" tone="tertiary">
-                {child.pickupTime}
-              </Text>
-            ) : null}
-          </VStack>
-        </View>
+        <LiveMap
+          markers={markers}
+          center={center}
+          height={300}
+          overlay={{
+            title: "Pickup Point",
+            subtitle: pickupName,
+            caption: child?.pickupTime || undefined,
+          }}
+        />
       </View>
       {frame ? (
         <HStack gap={8} align="center" style={{ marginTop: 10 }}>
@@ -484,34 +478,6 @@ const styles = StyleSheet.create({
     marginTop: 14,
     borderRadius: radius.lg,
     overflow: "hidden",
-    position: "relative",
-  },
-  callout: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    zIndex: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: palette.surface.primary,
-    borderRadius: radius.md,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    maxWidth: 200,
-    shadowColor: "#101828",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  calloutPin: {
-    width: 26,
-    height: 26,
-    borderRadius: radius.sm,
-    backgroundColor: "#FEECEB",
-    alignItems: "center",
-    justifyContent: "center",
   },
   liveDot: {
     width: 8,
