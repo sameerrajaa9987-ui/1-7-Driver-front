@@ -1,63 +1,60 @@
+/**
+ * DriverSosScreen — the driver's emergency screen (client mockup): concentric
+ * pulse rings around a big SOS button, the list of who gets notified, and a
+ * safety note. Two-step (tap → confirm) to avoid accidental alerts.
+ */
 import React, { useState } from "react";
-import { View, Pressable, StyleSheet } from "react-native";
-import { ShieldAlert, CheckCircle2, X, Phone } from "lucide-react-native";
+import { View, Pressable, Platform, Alert, StyleSheet } from "react-native";
+import {
+  ShieldAlert,
+  CheckCircle2,
+  UserCog,
+  Users,
+  School,
+  Info,
+} from "lucide-react-native";
 import { useTriggerSos } from "@modules/sos/hooks/useSos";
 import { getCurrentCoord } from "@modules/trip/utils";
 import { apiErrorMessage } from "@api/apiClient";
 import { palette, tints, radius } from "@shared/designSystem";
-import {
-  Screen,
-  Text,
-  VStack,
-  HStack,
-  Card,
-  Button,
-  TextField,
-} from "@shared/ui";
-
-type Phase = "idle" | "arming" | "sent";
+import { Screen, Text, VStack, HStack, Card, Button } from "@shared/ui";
 
 export default function DriverSosScreen() {
   const trigger = useTriggerSos();
-  const [phase, setPhase] = useState<Phase>("idle");
-  const [message, setMessage] = useState("");
+  const [sent, setSent] = useState(false);
 
-  const send = async () => {
-    // Guarded GPS — falls back to a demo coord on web / denied permission.
+  const doSend = async () => {
     const coord = await getCurrentCoord();
     trigger.mutate(
-      {
-        lat: coord.lat,
-        lng: coord.lng,
-        message: message.trim() || undefined,
-      },
-      {
-        onSuccess: () => setPhase("sent"),
-      },
+      { lat: coord.lat, lng: coord.lng },
+      { onSuccess: () => setSent(true) },
     );
   };
 
-  const reset = () => {
-    setPhase("idle");
-    setMessage("");
-    trigger.reset();
+  const confirmSend = () => {
+    if (Platform.OS === "web") {
+      if (window.confirm("Send an emergency alert with your live location?"))
+        doSend();
+    } else {
+      Alert.alert(
+        "Emergency SOS",
+        "This sends an emergency alert with your live location to the operator, parents and school. Use only in a real emergency.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Send SOS", style: "destructive", onPress: doSend },
+        ],
+      );
+    }
   };
 
-  return (
-    <Screen
-      overline="Emergency"
-      title="SOS"
-      subtitle="Raise an emergency alert to your operator"
-    >
-      {phase === "sent" ? (
+  if (sent) {
+    return (
+      <Screen title="SOS Alert">
         <Card
-          style={{
-            backgroundColor: tints.red.bg,
-            borderColor: tints.red.ring,
-          }}
+          style={{ backgroundColor: tints.red.bg, borderColor: tints.red.ring }}
         >
           <VStack gap={12} align="center">
-            <View style={[styles.sentIcon, { backgroundColor: "#FFFFFF" }]}>
+            <View style={styles.sentIcon}>
               <CheckCircle2
                 size={30}
                 color={tints.red.icon}
@@ -72,114 +69,164 @@ export default function DriverSosScreen() {
               align="center"
               style={{ color: tints.red.fg }}
             >
-              Your operator has been notified. Stay where you are if it is safe
-              — help is being coordinated.
+              Your operator, parents and school have been notified with your
+              live location. Stay where you are if it is safe.
             </Text>
             <Button
               label="Done"
               variant="secondary"
-              onPress={reset}
+              onPress={() => {
+                setSent(false);
+                trigger.reset();
+              }}
               style={{ marginTop: 8 }}
             />
           </VStack>
         </Card>
-      ) : (
-        <VStack gap={20} align="center">
-          <Text variant="body-sm" tone="tertiary" align="center">
-            Press the button below in an emergency. Your live location is shared
-            with your operator so they can reach you fast.
+      </Screen>
+    );
+  }
+
+  return (
+    <Screen title="SOS Alert">
+      {/* Pulsing SOS button */}
+      <View style={styles.pulseArea}>
+        <View style={[styles.ring, styles.ring3]} />
+        <View style={[styles.ring, styles.ring2]} />
+        <View style={[styles.ring, styles.ring1]} />
+        <Pressable
+          onPress={confirmSend}
+          disabled={trigger.isPending}
+          style={({ pressed }) => [
+            styles.sosButton,
+            pressed && { opacity: 0.85 },
+            trigger.isPending && { opacity: 0.6 },
+          ]}
+        >
+          <ShieldAlert size={40} color="#FFFFFF" strokeWidth={2.2} />
+          <Text variant="h2" style={{ color: "#FFFFFF", marginTop: 2 }}>
+            SOS
           </Text>
+        </Pressable>
+      </View>
 
-          <Pressable
-            onPress={() => setPhase("arming")}
-            disabled={phase === "arming"}
-            style={({ pressed }) => [
-              styles.sosButton,
-              pressed && { opacity: 0.85 },
-              phase === "arming" && { opacity: 0.6 },
-            ]}
-          >
-            <ShieldAlert size={54} color="#FFFFFF" strokeWidth={2.2} />
-            <Text
-              variant="display-sm"
-              style={{ color: "#FFFFFF", marginTop: 8 }}
-            >
-              SOS
-            </Text>
-          </Pressable>
+      <Text
+        variant="h3"
+        align="center"
+        style={{ color: palette.danger.text, marginTop: 8 }}
+      >
+        Emergency Alert
+      </Text>
+      <Text
+        variant="body-sm"
+        tone="tertiary"
+        align="center"
+        style={{ marginTop: 4 }}
+      >
+        Tap the button in case of any emergency.
+      </Text>
 
-          {phase === "arming" ? (
-            <Card
-              style={{
-                backgroundColor: tints.red.bg,
-                borderColor: tints.red.ring,
-                width: "100%",
-              }}
-            >
-              <VStack gap={14}>
-                <HStack align="center" justify="space-between">
-                  <Text variant="h4" style={{ color: tints.red.fg }}>
-                    Confirm emergency
-                  </Text>
-                  <Pressable onPress={reset} hitSlop={8}>
-                    <X size={20} color={tints.red.fg} strokeWidth={2} />
-                  </Pressable>
-                </HStack>
-                <Text variant="body-sm" style={{ color: tints.red.fg }}>
-                  This sends an emergency alert with your location to your
-                  operator. Only use it in a real emergency.
-                </Text>
-                <TextField
-                  label="Message (optional)"
-                  value={message}
-                  onChangeText={setMessage}
-                  placeholder="Briefly describe the situation"
-                />
-                {trigger.isError ? (
-                  <Text variant="body-sm" tone="danger">
-                    {apiErrorMessage(trigger.error)}
-                  </Text>
-                ) : null}
-                <Button
-                  label="Confirm emergency"
-                  variant="destructive"
-                  icon={<Phone size={16} color="#FFFFFF" strokeWidth={2} />}
-                  loading={trigger.isPending}
-                  onPress={send}
-                />
-              </VStack>
-            </Card>
-          ) : (
-            <Text variant="caption" tone="tertiary" align="center">
-              Tap SOS, then confirm — a two-step to avoid accidental alerts.
-            </Text>
-          )}
-        </VStack>
-      )}
+      {trigger.isError ? (
+        <Text
+          variant="body-sm"
+          tone="danger"
+          align="center"
+          style={{ marginTop: 10 }}
+        >
+          {apiErrorMessage(trigger.error)}
+        </Text>
+      ) : null}
+
+      {/* Who gets notified */}
+      <View style={styles.shareCard}>
+        <Text
+          variant="label"
+          weight="600"
+          align="center"
+          style={{ color: "rgba(255,255,255,0.9)", marginBottom: 14 }}
+        >
+          Your location will be shared with
+        </Text>
+        <HStack justify="space-between">
+          <ShareTarget icon={UserCog} label="Operator" />
+          <ShareTarget icon={Users} label="All Parents" />
+          <ShareTarget icon={School} label="School" />
+        </HStack>
+      </View>
+
+      <HStack gap={8} align="center" justify="center" style={{ marginTop: 16 }}>
+        <Info size={14} color={palette.text.tertiary} strokeWidth={2} />
+        <Text variant="caption" tone="tertiary">
+          Use only in real emergencies.
+        </Text>
+      </HStack>
     </Screen>
   );
 }
 
+function ShareTarget({
+  icon: Icon,
+  label,
+}: {
+  icon: typeof UserCog;
+  label: string;
+}) {
+  return (
+    <VStack gap={7} align="center" flex={1}>
+      <View style={styles.shareIcon}>
+        <Icon size={20} color="#FFFFFF" strokeWidth={2} />
+      </View>
+      <Text variant="label-sm" weight="600" style={{ color: "#FFFFFF" }}>
+        {label}
+      </Text>
+    </VStack>
+  );
+}
+
+const RED = "#F04438";
 const styles = StyleSheet.create({
-  sosButton: {
-    width: 220,
-    height: 220,
-    borderRadius: radius.full,
-    backgroundColor: tints.red.icon,
+  pulseArea: {
+    height: 260,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 8,
-    borderColor: tints.red.ring,
-    shadowColor: palette.danger.text,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.28,
-    shadowRadius: 22,
-    elevation: 10,
+    marginTop: 16,
+  },
+  ring: { position: "absolute", borderRadius: 9999 },
+  ring1: { width: 190, height: 190, backgroundColor: "rgba(240,68,56,0.18)" },
+  ring2: { width: 224, height: 224, backgroundColor: "rgba(240,68,56,0.12)" },
+  ring3: { width: 258, height: 258, backgroundColor: "rgba(240,68,56,0.07)" },
+  sosButton: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: RED,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: RED,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.4,
+    shadowRadius: 24,
+    elevation: 12,
   },
   sentIcon: {
     width: 64,
     height: 64,
     borderRadius: radius.full,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  shareCard: {
+    marginTop: 24,
+    backgroundColor: RED,
+    borderRadius: radius.lg,
+    padding: 18,
+  },
+  shareIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.full,
+    backgroundColor: "rgba(255,255,255,0.18)",
     alignItems: "center",
     justifyContent: "center",
   },

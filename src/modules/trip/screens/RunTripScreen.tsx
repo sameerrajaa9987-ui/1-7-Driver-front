@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Linking, Pressable, View } from "react-native";
+import { Linking, Pressable, View, StyleSheet } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 import {
   CheckCircle2,
   Flag,
@@ -9,12 +10,20 @@ import {
   School,
   Timer,
   UserX,
+  RefreshCw,
+  Navigation2,
 } from "lucide-react-native";
 import { apiClient, apiErrorMessage } from "@api/apiClient";
 import { onSocket } from "@shared/api/socket";
 import LiveMap from "@shared/ui/MapView";
 import type { MapMarker } from "@shared/ui/map.types";
-import { palette, radius, tints } from "@shared/designSystem";
+import {
+  palette,
+  radius,
+  tints,
+  gradients,
+  accent,
+} from "@shared/designSystem";
 import { useSettings } from "@modules/settings/hooks/useSettings";
 import {
   Screen,
@@ -25,6 +34,7 @@ import {
   Button,
   StatusChip,
   EmptyState,
+  HeaderIconButton,
 } from "@shared/ui";
 import {
   useArriveStop,
@@ -33,6 +43,7 @@ import {
   useNoShowStop,
   usePickupStop,
   useReachSchool,
+  useRoutes,
   useStudents,
   useTrip,
 } from "@modules/trip/hooks/useTrips";
@@ -55,6 +66,7 @@ export default function RunTripScreen() {
   const students = useStudents(
     trip?.routeId ? { routeId: trip.routeId } : undefined,
   );
+  const routesQuery = useRoutes();
 
   const [error, setError] = useState<string | null>(null);
 
@@ -133,41 +145,112 @@ export default function RunTripScreen() {
     sorted.length > 0 && sorted.every((s) => isStopDone(s.status));
   const isDone = trip.status === "completed";
 
+  const routeName =
+    routesQuery.data?.data?.find((r) => r.id === trip.routeId)?.name ||
+    (isPickup ? "Pickup run" : "Drop run");
+  const done = sorted.filter((s) => isStopDone(s.status)).length;
+  const total = sorted.length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  const nextStop = sorted.find((s) => !isStopDone(s.status));
+  const nextPickup = (students.data?.data ?? []).find(
+    (s) => s.id === nextStop?.studentId,
+  )?.pickupPoint;
+
   return (
     <Screen
-      overline={isPickup ? "Pickup run" : "Drop run"}
-      title="Run trip"
-      subtitle={`${sorted.filter((s) => isStopDone(s.status)).length}/${sorted.length} stops done`}
+      title="Live Trip"
+      right={<HeaderIconButton icon={RefreshCw} onPress={refetch} />}
       refreshing={isLoading}
       onRefresh={refetch}
     >
-      <LiveMap markers={markers} center={mapCenter} height={220} />
-
-      {/* Route progress — the driver's "how far along am I" at a glance. */}
-      {sorted.length > 0 ? (
-        <View style={{ marginTop: 14 }}>
-          <View
-            style={{
-              height: 8,
-              borderRadius: 4,
-              backgroundColor: palette.ink[100],
-              overflow: "hidden",
-            }}
-          >
-            <View
-              style={{
-                width: `${Math.round(
-                  (sorted.filter((s) => isStopDone(s.status)).length /
-                    sorted.length) *
-                    100,
-                )}%`,
-                height: "100%",
-                borderRadius: 4,
-                backgroundColor: palette.brand[500],
-              }}
-            />
+      {/* Status banner */}
+      <View style={styles.bannerWrap}>
+        <LinearGradient
+          colors={[...gradients.violet] as [string, string, ...string[]]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.banner}
+        >
+          <HStack align="center" justify="space-between">
+            <VStack gap={3} flex={1}>
+              <Text
+                variant="label-lg"
+                weight="700"
+                style={{ color: "#FFFFFF" }}
+                numberOfLines={1}
+              >
+                {routeName}
+              </Text>
+              <Text
+                variant="body-sm"
+                style={{ color: "rgba(255,255,255,0.82)" }}
+              >
+                {isPickup ? "Pickup" : "Drop"} in progress
+              </Text>
+            </VStack>
+            <VStack gap={1} align="flex-end">
+              <Text variant="h3" style={{ color: "#FFFFFF" }}>
+                {done} / {total}
+              </Text>
+              <Text
+                variant="caption"
+                style={{ color: "rgba(255,255,255,0.72)" }}
+              >
+                {isPickup ? "Picked Up" : "Dropped"}
+              </Text>
+            </VStack>
+          </HStack>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${pct}%` }]} />
           </View>
-        </View>
+        </LinearGradient>
+      </View>
+
+      <View style={{ marginTop: 14 }}>
+        <LiveMap markers={markers} center={mapCenter} height={200} />
+      </View>
+
+      {/* Upcoming stop */}
+      {nextStop ? (
+        <Card style={{ marginTop: 14 }}>
+          <HStack gap={12} align="center">
+            <View style={styles.pinTile}>
+              <MapPin size={18} color={accent.main} strokeWidth={2} />
+            </View>
+            <VStack gap={2} flex={1}>
+              <Text variant="caption" tone="tertiary">
+                Upcoming Stop
+              </Text>
+              <Text
+                variant="label-lg"
+                weight="700"
+                tone="primary"
+                numberOfLines={1}
+              >
+                {nextStop.studentName}
+              </Text>
+            </VStack>
+            {nextPickup && typeof nextPickup.lat === "number" ? (
+              <Pressable
+                onPress={() =>
+                  Linking.openURL(
+                    `https://www.google.com/maps/search/?api=1&query=${nextPickup.lat},${nextPickup.lng}`,
+                  )
+                }
+                style={styles.navBtn}
+              >
+                <Navigation2 size={15} color="#FFFFFF" strokeWidth={2.2} />
+                <Text
+                  variant="label-sm"
+                  weight="700"
+                  style={{ color: "#FFFFFF" }}
+                >
+                  Navigate
+                </Text>
+              </Pressable>
+            ) : null}
+          </HStack>
+        </Card>
       ) : null}
 
       {error ? (
@@ -176,7 +259,14 @@ export default function RunTripScreen() {
         </Text>
       ) : null}
 
-      <VStack gap={12} style={{ marginTop: 16 }}>
+      <Text
+        variant="h3"
+        tone="primary"
+        style={{ marginTop: 22, marginBottom: 12 }}
+      >
+        Stop Progress
+      </Text>
+      <VStack gap={12}>
         {sorted.length === 0 ? (
           <EmptyState
             icon={MapPin}
@@ -454,13 +544,12 @@ function FinishButton({
 
   return (
     <Button
-      label={isPickup ? "Reached school" : "Complete trip"}
-      variant={isPickup ? "accent" : "primary"}
+      label={isPickup ? "Reached School" : "Complete Trip"}
       loading={reachSchool.isPending || complete.isPending}
       disabled={!allDone}
       icon={
         isPickup ? (
-          <School size={17} color={palette.ink[900]} strokeWidth={2.2} />
+          <School size={17} color="#FFFFFF" strokeWidth={2.2} />
         ) : (
           <Flag size={17} color="#FFFFFF" strokeWidth={2.2} />
         )
@@ -469,3 +558,33 @@ function FinishButton({
     />
   );
 }
+
+const styles = StyleSheet.create({
+  bannerWrap: { borderRadius: radius.lg, overflow: "hidden" },
+  banner: { padding: 18 },
+  progressTrack: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "rgba(255,255,255,0.25)",
+    marginTop: 16,
+    overflow: "hidden",
+  },
+  progressFill: { height: 8, borderRadius: 4, backgroundColor: "#FDB022" },
+  pinTile: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.md,
+    backgroundColor: accent.soft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  navBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: accent.main,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: radius.md,
+  },
+});
