@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, StyleSheet, Pressable, ScrollView } from "react-native";
 import { Mail, Lock, Phone, ShieldCheck } from "lucide-react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { Text, TextField, Button, VStack, HStack, BrandLogo } from "@shared/ui";
 import { palette, radius, shadows } from "@shared/designSystem";
 import { apiErrorMessage } from "@api/apiClient";
@@ -21,7 +21,11 @@ type Mode = "staff" | "parent";
 
 export default function LoginScreen() {
   const navigation = useNavigation<any>();
-  const [mode, setMode] = useState<Mode>("staff");
+  const route = useRoute<any>();
+  // The role picker passes role: "parent" preselects the OTP tab.
+  const initialMode: Mode =
+    route.params?.role === "parent" ? "parent" : "staff";
+  const [mode, setMode] = useState<Mode>(initialMode);
 
   return (
     <View style={{ flex: 1, backgroundColor: palette.surface.secondary }}>

@@ -24,4 +24,10 @@ export { HeaderIconButton } from "./HeaderIconButton";
 export { BusScene } from "./illustrations/BusScene";
 export { SupportScene } from "./illustrations/SupportScene";
 export { SchoolScene } from "./illustrations/SchoolScene";
+export {
+  WelcomeBusScene,
+  TrackingScene,
+  SafetyScene,
+  PaymentScene,
+} from "./illustrations/OnboardingScenes";
 export { useBottomPadding, useTabBottomPadding } from "./useBottomPadding";

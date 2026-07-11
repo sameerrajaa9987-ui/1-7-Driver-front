@@ -1,8 +1,8 @@
 /**
- * OnboardingScreen — the first-run intro (2026 best practice: 3 value-first
- * slides, benefits not how-to, a Skip for power users, shown once). Editorial
- * ink canvas, a swipeable carousel, marigold dot pager, and haptic page turns.
- * "Get started" marks it seen and drops to Login.
+ * OnboardingScreen — first-run intro (client mockup): a light 4-slide carousel
+ * (Welcome → Live Tracking → Safety First → Payments) with flat on-brand
+ * illustrations, a Skip, a dot pager, "Get Started" on the welcome slide and a
+ * round next-arrow on the rest. Finishing drops to the role picker.
  */
 import React, { useRef, useState } from "react";
 import {
@@ -19,41 +19,64 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import {
   MapPin,
-  BellRing,
   ShieldCheck,
+  Wallet,
   ArrowRight,
+  ShieldCheck as ShieldGlyph,
+  BadgeCheck,
+  Lock,
   type LucideIcon,
 } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useOnboardingStore } from "@shared/store/useOnboardingStore";
-import { palette, radius } from "@shared/designSystem";
-import { Text, VStack, Button, BrandLogo } from "@shared/ui";
+import { palette, radius, tints, accent } from "@shared/designSystem";
+import {
+  Text,
+  VStack,
+  HStack,
+  Button,
+  WelcomeBusScene,
+  TrackingScene,
+  SafetyScene,
+  PaymentScene,
+} from "@shared/ui";
+
+type Scene = (props: { size?: number }) => React.ReactElement;
 
 interface Slide {
-  icon: LucideIcon;
-  overline: string;
-  title: string;
-  body: string;
+  variant: "welcome" | "value";
+  Scene: Scene;
+  icon?: LucideIcon;
+  tint?: keyof typeof tints;
+  title?: string;
+  body?: string;
 }
 
 const SLIDES: Slide[] = [
+  { variant: "welcome", Scene: WelcomeBusScene },
   {
+    variant: "value",
+    Scene: TrackingScene,
     icon: MapPin,
-    overline: "Live tracking",
-    title: "Know exactly where the van is",
-    body: "Follow the school bus on a live map, with an arrival estimate for every pickup — the anxious “where is my child?” answered before you ask.",
+    tint: "violet",
+    title: "Live Tracking",
+    body: "Track the school bus in real time and stay updated at every step of your child’s journey.",
   },
   {
-    icon: BellRing,
-    overline: "Verified & announced",
-    title: "Every pickup and drop, confirmed",
-    body: "QR-verified boarding and a message at each step — started, boarding, reached school, dropped safely. Nobody has to remember to send it.",
-  },
-  {
+    variant: "value",
+    Scene: SafetyScene,
     icon: ShieldCheck,
-    overline: "Money & safety, handled",
-    title: "Every rupee tracked, every child safe",
-    body: "Online and cash fees with receipts, driver compliance and safety scores, and one-tap SOS to the operator and driver. Peace of mind, built in.",
+    tint: "blue",
+    title: "Safety First",
+    body: "SOS alerts, verified attendance and instant notifications ensure your child’s complete safety.",
+  },
+  {
+    variant: "value",
+    Scene: PaymentScene,
+    icon: Wallet,
+    tint: "green",
+    title: "Easy & Transparent Payments",
+    body: "Pay fees securely, get instant receipts and complete transparency in every transaction.",
   },
 ];
 
@@ -66,16 +89,14 @@ export default function OnboardingScreen() {
 
   const finish = () => {
     complete();
-    navigation.replace("Login");
+    navigation.replace("RolePicker");
   };
 
-  const onNext = () => {
+  const goNext = () => {
     if (index < SLIDES.length - 1) {
       if (Platform.OS !== "web") Haptics.selectionAsync().catch(() => {});
       const next = index + 1;
-      setIndex(next); // optimistic — keeps the CTA label correct on web too
-      // scrollToOffset moves the content reliably on both web and native
-      // (scrollToIndex is flaky on react-native-web).
+      setIndex(next);
       listRef.current?.scrollToOffset({ offset: next * width, animated: true });
     } else {
       finish();
@@ -87,38 +108,22 @@ export default function OnboardingScreen() {
     if (i !== index) setIndex(i);
   };
 
-  const isLast = index === SLIDES.length - 1;
-
   return (
-    <View style={{ flex: 1, backgroundColor: palette.surface.dark }}>
+    <View style={{ flex: 1, backgroundColor: palette.surface.secondary }}>
       <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
-        {/* Brand + Skip */}
+        {/* Skip */}
         <View style={styles.topBar}>
-          <View style={styles.brand}>
-            <View style={styles.logo}>
-              <BrandLogo size={22} tone="ink" />
-            </View>
-            <Text variant="label-lg" weight="700" style={{ color: "#FFFFFF" }}>
-              SchoolRide Connect
+          <Pressable onPress={finish} hitSlop={10}>
+            <Text variant="label" weight="600" tone="tertiary">
+              Skip
             </Text>
-          </View>
-          {!isLast ? (
-            <Pressable onPress={finish} hitSlop={10}>
-              <Text
-                variant="label"
-                weight="600"
-                style={{ color: "rgba(255,255,255,0.6)" }}
-              >
-                Skip
-              </Text>
-            </Pressable>
-          ) : null}
+          </Pressable>
         </View>
 
         <FlatList
           ref={listRef}
           data={SLIDES}
-          keyExtractor={(s) => s.title}
+          keyExtractor={(_, i) => String(i)}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
@@ -127,11 +132,11 @@ export default function OnboardingScreen() {
           renderItem={({ item }) => <SlideView slide={item} width={width} />}
         />
 
-        {/* Pager dots */}
+        {/* Dots */}
         <View style={styles.dots}>
-          {SLIDES.map((s, i) => (
+          {SLIDES.map((_, i) => (
             <View
-              key={s.title}
+              key={i}
               style={[
                 styles.dot,
                 i === index ? styles.dotActive : styles.dotIdle,
@@ -142,13 +147,49 @@ export default function OnboardingScreen() {
 
         {/* CTA */}
         <View style={styles.cta}>
-          <Button
-            label={isLast ? "Get started" : "Next"}
-            onPress={onNext}
-            rightIcon={
-              <ArrowRight size={18} color="#FFFFFF" strokeWidth={2.4} />
-            }
-          />
+          {index === 0 ? (
+            <VStack gap={16} align="center">
+              <Button
+                label="Get Started"
+                onPress={finish}
+                rightIcon={
+                  <ArrowRight size={18} color="#FFFFFF" strokeWidth={2.4} />
+                }
+              />
+              <Text variant="caption" tone="tertiary">
+                Trusted by Parents, Schools &amp; Operators
+              </Text>
+              <HStack gap={16} justify="center">
+                <ShieldGlyph
+                  size={18}
+                  color={palette.text.tertiary}
+                  strokeWidth={1.9}
+                />
+                <BadgeCheck
+                  size={18}
+                  color={palette.text.tertiary}
+                  strokeWidth={1.9}
+                />
+                <Lock
+                  size={18}
+                  color={palette.text.tertiary}
+                  strokeWidth={1.9}
+                />
+              </HStack>
+            </VStack>
+          ) : (
+            <View style={{ alignItems: "center" }}>
+              <Pressable
+                onPress={goNext}
+                style={({ pressed }) => [
+                  styles.roundBtn,
+                  pressed && { opacity: 0.85 },
+                ]}
+              >
+                <ArrowRight size={22} color="#FFFFFF" strokeWidth={2.6} />
+              </Pressable>
+            </View>
+          )}
         </View>
       </SafeAreaView>
     </View>
@@ -156,23 +197,72 @@ export default function OnboardingScreen() {
 }
 
 function SlideView({ slide, width }: { slide: Slide; width: number }) {
-  const Icon = slide.icon;
-  return (
-    <View style={[styles.slide, { width }]}>
-      <View style={styles.iconTile}>
-        <Icon size={40} color={palette.brand[400]} strokeWidth={1.9} />
+  const { Scene } = slide;
+  if (slide.variant === "welcome") {
+    return (
+      <View style={[styles.slide, { width }]}>
+        <VStack gap={6}>
+          <Text variant="label-lg" weight="600" tone="tertiary">
+            Welcome to
+          </Text>
+          <Text variant="display-sm" tone="primary" style={{ lineHeight: 40 }}>
+            SchoolRide
+          </Text>
+          <Text
+            variant="display-sm"
+            style={{ color: accent.main, lineHeight: 40 }}
+          >
+            Connect
+          </Text>
+          <Text
+            variant="label-lg"
+            weight="700"
+            style={{ color: accent.main, marginTop: 4 }}
+          >
+            Smart. Safe. Connected.
+          </Text>
+          <Text
+            variant="body"
+            tone="secondary"
+            style={{ marginTop: 8, maxWidth: 320 }}
+          >
+            The all-in-one solution for school transport tracking, attendance,
+            payments and safety.
+          </Text>
+        </VStack>
+        <View style={{ alignItems: "center", marginTop: 24 }}>
+          <Scene size={240} />
+        </View>
       </View>
-      <VStack gap={12} style={{ marginTop: 36 }}>
-        <Text variant="overline" style={{ color: palette.brand[400] }}>
-          {slide.overline}
-        </Text>
-        <Text variant="display-sm" style={{ color: "#FFFFFF" }}>
+    );
+  }
+
+  const Icon = slide.icon!;
+  const t = tints[slide.tint ?? "violet"];
+  return (
+    <View style={[styles.slide, { width, justifyContent: "center" }]}>
+      <View style={{ alignItems: "center" }}>
+        <Scene size={230} />
+        <View style={[styles.iconTile, { backgroundColor: t.bg }]}>
+          <Icon size={26} color={t.icon} strokeWidth={2} />
+        </View>
+        <Text
+          variant="h1"
+          tone="primary"
+          align="center"
+          style={{ marginTop: 18 }}
+        >
           {slide.title}
         </Text>
-        <Text variant="body-lg" style={{ color: "rgba(255,255,255,0.72)" }}>
+        <Text
+          variant="body-lg"
+          tone="secondary"
+          align="center"
+          style={{ marginTop: 10, maxWidth: 320 }}
+        >
           {slide.body}
         </Text>
-      </VStack>
+      </View>
     </View>
   );
 }
@@ -180,44 +270,40 @@ function SlideView({ slide, width }: { slide: Slide; width: number }) {
 const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     paddingHorizontal: 22,
     paddingTop: 8,
     paddingBottom: 4,
   },
-  brand: { flexDirection: "row", alignItems: "center", gap: 9 },
-  logo: {
-    width: 30,
-    height: 30,
-    borderRadius: radius.sm,
-    backgroundColor: palette.brand[500],
-    alignItems: "center",
-    justifyContent: "center",
-  },
   slide: {
     flex: 1,
     justifyContent: "center",
-    paddingHorizontal: 30,
+    paddingHorizontal: 28,
   },
   iconTile: {
-    width: 92,
-    height: 92,
-    borderRadius: radius["2xl"],
+    width: 56,
+    height: 56,
+    borderRadius: radius.lg,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
+    marginTop: 26,
   },
   dots: {
     flexDirection: "row",
     gap: 8,
     justifyContent: "center",
-    marginBottom: 20,
+    marginBottom: 22,
   },
   dot: { height: 8, borderRadius: 4 },
-  dotActive: { width: 26, backgroundColor: palette.brand[400] },
-  dotIdle: { width: 8, backgroundColor: "rgba(255,255,255,0.24)" },
-  cta: { paddingHorizontal: 24, paddingBottom: 8 },
+  dotActive: { width: 26, backgroundColor: accent.main },
+  dotIdle: { width: 8, backgroundColor: palette.border.strong },
+  cta: { paddingHorizontal: 24, paddingBottom: 10 },
+  roundBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: accent.main,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });
