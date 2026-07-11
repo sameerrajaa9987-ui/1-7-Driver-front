@@ -10,21 +10,33 @@ interface Props {
   title: string;
   message?: string;
   action?: React.ReactNode;
+  /** Optional flat illustration shown instead of the icon halo. */
+  illustration?: React.ReactNode;
 }
 
-export function EmptyState({ icon: Icon, title, message, action }: Props) {
+export function EmptyState({
+  icon: Icon,
+  title,
+  message,
+  action,
+  illustration,
+}: Props) {
   return (
     <VStack
       align="center"
       gap={12}
-      style={{ marginTop: 64, paddingHorizontal: 24 }}
+      style={{ marginTop: 48, paddingHorizontal: 24 }}
     >
-      {/* Layered disc — a soft halo behind the icon reads premium vs flat. */}
-      <View style={styles.halo}>
-        <View style={styles.icon}>
-          <Icon size={30} color={palette.brand[600]} strokeWidth={1.7} />
+      {illustration ? (
+        <View style={{ marginBottom: 4 }}>{illustration}</View>
+      ) : (
+        // Layered disc — a soft halo behind the icon reads premium vs flat.
+        <View style={styles.halo}>
+          <View style={styles.icon}>
+            <Icon size={30} color={palette.brand[600]} strokeWidth={1.7} />
+          </View>
         </View>
-      </View>
+      )}
       <Text variant="h3" tone="secondary" align="center">
         {title}
       </Text>

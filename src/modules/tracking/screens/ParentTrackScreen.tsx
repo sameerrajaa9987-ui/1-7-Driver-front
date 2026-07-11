@@ -13,10 +13,12 @@ import LiveMap from "@shared/ui/MapView";
 import type { MapMarker } from "@shared/ui/map.types";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { useStudent } from "@modules/student/hooks/useStudents";
+import { useTripPosition } from "@modules/tracking/hooks/useTracking";
 import { useTriggerSos } from "@modules/sos/hooks/useSos";
 import {
   palette,
   tints,
+  accent,
   tripStatusMeta,
   gradients,
   radius,
@@ -32,6 +34,7 @@ import {
   StatusTimeline,
   LiveBadge,
   HeroGlow,
+  BusScene,
   type TimelineStep,
 } from "@shared/ui";
 import { useStudents, useTrips } from "@modules/trip/hooks/useTrips";
@@ -83,13 +86,15 @@ export default function ParentTrackScreen() {
     return { trip: null as Trip | null, myStop: null as TripStop | null };
   }, [trips, userId]);
 
-  const [frame, setFrame] = useState<VehicleFrame | null>(null);
+  const [socketFrame, setSocketFrame] = useState<VehicleFrame | null>(null);
+  const lastKnown = useTripPosition(trip?.id);
+  const frame = socketFrame ?? (lastKnown.data as VehicleFrame | null) ?? null;
   useEffect(() => {
     if (!trip?.id) return;
-    setFrame(null);
+    setSocketFrame(null);
     emitSocket("trip:subscribe", trip.id);
     const unsub = onSocket<VehicleFrame>("vehicle:position", (f) => {
-      if (f?.tripId === trip.id) setFrame(f);
+      if (f?.tripId === trip.id) setSocketFrame(f);
     });
     return unsub;
   }, [trip?.id]);
@@ -158,6 +163,7 @@ export default function ParentTrackScreen() {
       >
         <EmptyState
           icon={Bus}
+          illustration={<BusScene size={180} />}
           title={isLoading ? "Checking for rides…" : "No active ride right now"}
           message="You'll see your child's live location here the moment their trip starts."
         />
@@ -325,17 +331,13 @@ function TrackContent({
               gap: 8,
               paddingVertical: 12,
               borderRadius: radius.md,
-              backgroundColor: tints.green.bg,
+              backgroundColor: accent.soft,
               borderWidth: 1,
-              borderColor: tints.green.ring,
+              borderColor: tints.teal.ring,
             }}
           >
-            <Phone size={16} color={tints.green.icon} strokeWidth={2.2} />
-            <Text
-              variant="label"
-              weight="600"
-              style={{ color: tints.green.fg }}
-            >
+            <Phone size={16} color={accent.main} strokeWidth={2.2} />
+            <Text variant="label" weight="600" style={{ color: accent.dark }}>
               Call driver
             </Text>
           </Pressable>

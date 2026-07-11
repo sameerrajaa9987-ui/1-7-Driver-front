@@ -15,7 +15,6 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
-  Bus,
   Phone,
   ShieldAlert,
   PlayCircle,
@@ -24,7 +23,6 @@ import {
   School,
   ChevronRight,
   ChevronDown,
-  Clock,
   CalendarDays,
   BellRing,
   Check,
@@ -33,17 +31,19 @@ import { emitSocket, onSocket } from "@shared/api/socket";
 import { useAuthStore } from "@shared/store/useAuthStore";
 import { useStudents } from "@modules/student/hooks/useStudents";
 import { useTrips } from "@modules/trip/hooks/useTrips";
+import { useTripPosition } from "@modules/tracking/hooks/useTracking";
 import { useTriggerSos } from "@modules/sos/hooks/useSos";
 import { useSectionNav } from "@navigation/AppNavigator";
+import { palette, radius, gradients, accent } from "@shared/designSystem";
 import {
-  palette,
-  radius,
-  gradients,
-  glass,
-  accent,
-  tripStatusMeta,
-} from "@shared/designSystem";
-import { Screen, Text, VStack, HStack, Card, Avatar } from "@shared/ui";
+  Screen,
+  Text,
+  VStack,
+  HStack,
+  Card,
+  Avatar,
+  BusScene,
+} from "@shared/ui";
 import { mediaUrl } from "@shared/media";
 import { Trip, TripStop } from "@modules/trip/types";
 import { DEMO_COORD, todayISO } from "@modules/trip/utils";
@@ -118,14 +118,17 @@ export default function ParentDashboardScreen() {
 
   const sos = useTriggerSos();
 
-  // Live GPS frame for the ETA.
-  const [frame, setFrame] = useState<VehicleFrame | null>(null);
+  // Live GPS frame for the ETA — socket push, seeded/fallen-back by a GET so it
+  // shows the moment the screen opens mid-trip.
+  const [socketFrame, setSocketFrame] = useState<VehicleFrame | null>(null);
+  const lastKnown = useTripPosition(trip?.id);
+  const frame = socketFrame ?? (lastKnown.data as VehicleFrame | null) ?? null;
   useEffect(() => {
     if (!trip?.id) return;
-    setFrame(null);
+    setSocketFrame(null);
     emitSocket("trip:subscribe", trip.id);
     const unsub = onSocket<VehicleFrame>("vehicle:position", (f) => {
-      if (f?.tripId === trip.id) setFrame(f);
+      if (f?.tripId === trip.id) setSocketFrame(f);
     });
     return unsub;
   }, [trip?.id]);
@@ -143,12 +146,20 @@ export default function ParentDashboardScreen() {
     return `Arriving in ~ ${Math.max(1, Math.round(d / ((speed * 1000) / 60)))} min`;
   }, [frame, child?.pickupPoint, myStop?.status]);
 
-  const status = trip
-    ? (tripStatusMeta[myStop?.status || trip.status]?.label ?? "On the way")
-    : null;
-
   const boarded =
     myStop?.status === "picked_up" || myStop?.status === "dropped";
+
+  // While the trip is live and the child hasn't boarded, the van is "On the
+  // way" — only switch to boarded/absent once the stop actually transitions.
+  const status = !trip
+    ? null
+    : myStop?.status === "dropped"
+      ? "Dropped safely"
+      : myStop?.status === "picked_up"
+        ? "On board"
+        : myStop?.status === "no_show"
+          ? "Absent"
+          : "On the way";
   const steps = [
     {
       label: "Trip Started",
@@ -319,87 +330,128 @@ export default function ParentDashboardScreen() {
         </View>
       ) : null}
 
-      {/* Live status hero (active) OR illustrated No Active Ride (idle) */}
+      {/* Live 'On the way' card (mockup) OR illustrated No Active Ride */}
       {trip && myStop ? (
-        <Pressable onPress={() => go("Track")} style={styles.heroWrap}>
-          <LinearGradient
-            colors={[...gradients.violet] as [string, string, ...string[]]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}
-          >
-            <HStack align="center" justify="space-between">
-              <VStack gap={3} flex={1}>
-                <Text variant="display-sm" style={{ color: "#FFFFFF" }}>
-                  {status}
-                </Text>
-                <Text
-                  variant="body"
-                  style={{ color: "rgba(255,255,255,0.85)" }}
-                >
-                  {eta ||
-                    (boarded
-                      ? "Your child is on the vehicle"
-                      : "Waiting for the vehicle…")}
-                </Text>
-              </VStack>
-              <View style={[styles.busTile, glass.light]}>
-                <Bus size={30} color="#FFFFFF" strokeWidth={1.8} />
-              </View>
-            </HStack>
+        <Pressable onPress={() => go("Track")} style={styles.liveCard}>
+          {/* Lavender header — status + bus illustration */}
+          <View style={styles.liveHeader}>
+            <VStack gap={4} flex={1}>
+              <Text variant="h1" tone="primary">
+                {status}
+              </Text>
+              <Text variant="body-sm" tone="tertiary">
+                {eta ||
+                  (boarded
+                    ? "Your child is on the vehicle"
+                    : "Waiting for the vehicle…")}
+              </Text>
+            </VStack>
+            <BusScene size={96} />
+          </View>
 
-            <HStack
-              gap={8}
-              align="center"
-              justify="space-between"
-              style={{ marginTop: 16 }}
-            >
-              <VStack gap={1} flex={1}>
+          {/* Route / driver / vehicle + journey timeline */}
+          <View style={styles.liveBody}>
+            <HStack align="center" justify="space-between">
+              <VStack gap={2} flex={1}>
                 <Text
-                  variant="label"
+                  variant="label-lg"
                   weight="700"
-                  style={{ color: "#FFFFFF" }}
+                  tone="primary"
                   numberOfLines={1}
                 >
                   {child?.routeName || "Route"}
                 </Text>
-                <Text
-                  variant="caption"
-                  style={{ color: "rgba(255,255,255,0.8)" }}
-                  numberOfLines={1}
-                >
+                <Text variant="body-sm" tone="tertiary" numberOfLines={1}>
                   {child?.driverName || "Driver"}
                 </Text>
               </VStack>
               {child?.vehicleNumber ? (
-                <View style={[styles.vehicleChip, glass.light]}>
+                <View style={styles.vehicleChipLight}>
                   <Text
                     variant="label-sm"
                     weight="700"
-                    style={{ color: "#FFFFFF" }}
+                    style={{ color: palette.text.secondary }}
                   >
                     {child.vehicleNumber}
                   </Text>
                 </View>
               ) : null}
-              <ChevronRight size={18} color="rgba(255,255,255,0.8)" />
             </HStack>
-          </LinearGradient>
+
+            <View style={styles.timeline}>
+              {steps.map((s, i) => (
+                <View key={s.label} style={styles.tlCol}>
+                  <View style={styles.tlIconRow}>
+                    <View
+                      style={[
+                        styles.tlLine,
+                        {
+                          opacity: i === 0 ? 0 : 1,
+                          backgroundColor: s.done
+                            ? accent.main
+                            : palette.ink[200],
+                        },
+                      ]}
+                    />
+                    <View
+                      style={[
+                        styles.tlCircle,
+                        {
+                          backgroundColor: s.done
+                            ? accent.main
+                            : palette.ink[100],
+                        },
+                      ]}
+                    >
+                      <s.icon
+                        size={15}
+                        color={s.done ? "#FFFFFF" : palette.ink[400]}
+                        strokeWidth={2}
+                      />
+                    </View>
+                    <View
+                      style={[
+                        styles.tlLine,
+                        {
+                          opacity: i === steps.length - 1 ? 0 : 1,
+                          backgroundColor: steps[i + 1]?.done
+                            ? accent.main
+                            : palette.ink[200],
+                        },
+                      ]}
+                    />
+                  </View>
+                  <Text
+                    variant="label-sm"
+                    weight="600"
+                    align="center"
+                    style={{
+                      color: palette.ink[600],
+                      fontSize: 10,
+                      marginTop: 6,
+                    }}
+                  >
+                    {s.label}
+                  </Text>
+                  <Text
+                    variant="caption"
+                    align="center"
+                    style={{ color: palette.ink[400], fontSize: 10 }}
+                  >
+                    {s.time}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
         </Pressable>
       ) : (
         <View style={[styles.emptyCard, { marginTop: 14 }]}>
-          <View style={styles.illus}>
-            <View style={styles.illusCircle}>
-              <Bus size={40} color={accent.main} strokeWidth={1.7} />
-            </View>
-            <View style={styles.illusBadge}>
-              <Clock size={15} color="#FFFFFF" strokeWidth={2.4} />
-            </View>
-          </View>
+          <BusScene size={170} />
           <Text
             variant="h2"
             align="center"
-            style={{ color: accent.main, marginTop: 4 }}
+            style={{ color: accent.main, marginTop: 10 }}
           >
             No Active Ride
           </Text>
@@ -414,47 +466,6 @@ export default function ParentDashboardScreen() {
           </Text>
         </View>
       )}
-
-      {/* Journey steps (only during an active ride) */}
-      {trip && myStop ? (
-        <Card style={{ marginTop: 14 }}>
-          <HStack gap={4}>
-            {steps.map((s) => (
-              <VStack key={s.label} gap={6} align="center" flex={1}>
-                <View
-                  style={[
-                    styles.stepIcon,
-                    {
-                      backgroundColor: s.done ? accent.soft : palette.ink[100],
-                    },
-                  ]}
-                >
-                  <s.icon
-                    size={17}
-                    color={s.done ? accent.main : palette.ink[400]}
-                    strokeWidth={2}
-                  />
-                </View>
-                <Text
-                  variant="label-sm"
-                  weight="600"
-                  align="center"
-                  style={{ color: palette.ink[600], fontSize: 10 }}
-                >
-                  {s.label}
-                </Text>
-                <Text
-                  variant="caption"
-                  align="center"
-                  style={{ color: palette.ink[400], fontSize: 10 }}
-                >
-                  {s.time}
-                </Text>
-              </VStack>
-            ))}
-          </HStack>
-        </Card>
-      ) : null}
 
       {/* Today's Schedule */}
       {child ? (
@@ -564,19 +575,45 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: radius.md,
   },
-  heroWrap: { borderRadius: radius.lg, overflow: "hidden", marginTop: 14 },
-  hero: { padding: 18 },
-  busTile: {
-    width: 56,
-    height: 56,
+  liveCard: {
+    marginTop: 14,
+    backgroundColor: palette.surface.primary,
     borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: palette.border.default,
+    overflow: "hidden",
+  },
+  liveHeader: {
+    flexDirection: "row",
     alignItems: "center",
+    backgroundColor: accent.soft,
+    paddingHorizontal: 18,
+    paddingTop: 16,
+  },
+  liveBody: { padding: 16 },
+  vehicleChipLight: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: palette.border.default,
+    backgroundColor: palette.surface.secondary,
+  },
+  timeline: { flexDirection: "row", marginTop: 18 },
+  tlCol: { flex: 1, alignItems: "center" },
+  tlIconRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "stretch",
     justifyContent: "center",
   },
-  vehicleChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: radius.sm,
+  tlLine: { flex: 1, height: 2 },
+  tlCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.full,
+    alignItems: "center",
+    justifyContent: "center",
   },
   emptyCard: {
     backgroundColor: palette.surface.primary,
@@ -586,40 +623,6 @@ const styles = StyleSheet.create({
     paddingVertical: 28,
     paddingHorizontal: 20,
     alignItems: "center",
-  },
-  illus: {
-    width: 96,
-    height: 84,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  illusCircle: {
-    width: 84,
-    height: 84,
-    borderRadius: radius.full,
-    backgroundColor: accent.soft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  illusBadge: {
-    position: "absolute",
-    right: 4,
-    bottom: 6,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: accent.main,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 3,
-    borderColor: palette.surface.primary,
-  },
-  stepIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: radius.full,
-    alignItems: "center",
-    justifyContent: "center",
   },
   scheduleCol: {
     flex: 1,

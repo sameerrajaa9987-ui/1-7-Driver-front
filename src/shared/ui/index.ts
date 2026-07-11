@@ -20,4 +20,6 @@ export { HeroGlow } from "./HeroGlow";
 export { BrandLogo } from "./BrandLogo";
 export { Screen } from "./Screen";
 export { EmptyState } from "./EmptyState";
+export { BusScene } from "./illustrations/BusScene";
+export { SupportScene } from "./illustrations/SupportScene";
 export { useBottomPadding, useTabBottomPadding } from "./useBottomPadding";

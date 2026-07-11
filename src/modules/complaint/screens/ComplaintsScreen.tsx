@@ -15,6 +15,7 @@ import {
   StatusChip,
   ChipsRow,
   EmptyState,
+  SupportScene,
 } from "@shared/ui";
 
 type ChipTone = "success" | "warning" | "danger" | "info" | "neutral";
@@ -59,42 +60,87 @@ export default function ComplaintsScreen() {
       subtitle={`${data?.meta?.total ?? 0} tickets`}
       refreshing={isRefetching || isLoading}
       onRefresh={refetch}
-      right={
-        isParent ? (
-          <Button
-            label="New ticket"
-            size="sm"
-            fullWidth={false}
-            icon={<Plus size={18} color="#FFFFFF" strokeWidth={2.2} />}
-            onPress={() => navigation.navigate("ComplaintForm")}
-          />
-        ) : undefined
-      }
     >
-      <ChipsRow chips={FILTERS} active={filter} onChange={setFilter} />
-
-      {complaints.length === 0 ? (
-        <EmptyState
-          icon={MessageSquareWarning}
-          title={isLoading ? "Loading…" : "No complaints"}
-          message={
-            isParent
-              ? "Raise a ticket and your operator will follow up."
-              : "No complaints have been raised yet."
-          }
-        />
-      ) : (
-        <VStack gap={12} style={{ marginTop: 16 }}>
-          {complaints.map((c) => (
-            <ComplaintRow
-              key={c.id}
-              complaint={c}
-              onPress={() =>
-                navigation.navigate("ComplaintDetail", { id: c.id })
-              }
+      {isParent ? (
+        <>
+          {/* "Have an issue?" hero — the primary parent CTA (mockup). */}
+          <Card style={{ alignItems: "center", paddingVertical: 24 }}>
+            <SupportScene size={150} />
+            <Text
+              variant="h2"
+              tone="primary"
+              align="center"
+              style={{ marginTop: 8 }}
+            >
+              Have an issue?
+            </Text>
+            <Text
+              variant="body-sm"
+              tone="tertiary"
+              align="center"
+              style={{ marginTop: 6, maxWidth: 280 }}
+            >
+              Raise a complaint and we&apos;ll resolve it as soon as possible.
+            </Text>
+            <Button
+              label="New Complaint"
+              icon={<Plus size={18} color="#FFFFFF" strokeWidth={2.2} />}
+              onPress={() => navigation.navigate("ComplaintForm")}
+              style={{ marginTop: 16 }}
             />
-          ))}
-        </VStack>
+          </Card>
+
+          <Text
+            variant="h3"
+            tone="primary"
+            style={{ marginTop: 24, marginBottom: 12 }}
+          >
+            Recent Complaints
+          </Text>
+          {complaints.length === 0 ? (
+            <Text variant="body-sm" tone="tertiary">
+              {isLoading
+                ? "Loading…"
+                : "You haven’t raised any complaints yet."}
+            </Text>
+          ) : (
+            <VStack gap={12}>
+              {complaints.map((c) => (
+                <ComplaintRow
+                  key={c.id}
+                  complaint={c}
+                  onPress={() =>
+                    navigation.navigate("ComplaintDetail", { id: c.id })
+                  }
+                />
+              ))}
+            </VStack>
+          )}
+        </>
+      ) : (
+        <>
+          <ChipsRow chips={FILTERS} active={filter} onChange={setFilter} />
+          {complaints.length === 0 ? (
+            <EmptyState
+              icon={MessageSquareWarning}
+              illustration={<SupportScene size={150} />}
+              title={isLoading ? "Loading…" : "No complaints"}
+              message="No complaints have been raised yet."
+            />
+          ) : (
+            <VStack gap={12} style={{ marginTop: 16 }}>
+              {complaints.map((c) => (
+                <ComplaintRow
+                  key={c.id}
+                  complaint={c}
+                  onPress={() =>
+                    navigation.navigate("ComplaintDetail", { id: c.id })
+                  }
+                />
+              ))}
+            </VStack>
+          )}
+        </>
       )}
     </Screen>
   );

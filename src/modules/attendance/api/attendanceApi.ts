@@ -15,7 +15,14 @@ export interface AttendanceRecord {
   type: "pickup" | "drop";
   method: string;
   verified: boolean;
+  at: string;
   createdAt: string;
+}
+
+export interface StudentQr {
+  studentId: string;
+  name: string;
+  token: string;
 }
 
 export const attendanceApi = {
@@ -45,6 +52,13 @@ export const attendanceApi = {
       success: boolean;
       data: AttendanceSummary;
     }>(`/attendance/summary/${studentId}`);
+    return res.data.data;
+  },
+  /** Signed QR payload for a student's bus pass. */
+  qrToken: async (studentId: string) => {
+    const res = await apiClient.get<{ success: boolean; data: StudentQr }>(
+      `/attendance/qr/${studentId}`,
+    );
     return res.data.data;
   },
 };

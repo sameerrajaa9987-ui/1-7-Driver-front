@@ -22,6 +22,8 @@ import {
   Building2,
   Plug,
   ScanLine,
+  QrCode,
+  CalendarCheck,
 } from "lucide-react-native";
 import type { Role } from "@shared/permissions";
 
@@ -41,6 +43,8 @@ import DriverPaymentsScreen from "@modules/payment/screens/DriverPaymentsScreen"
 
 import ParentTrackScreen from "@modules/tracking/screens/ParentTrackScreen";
 import ParentDashboardScreen from "@modules/dashboard/screens/ParentDashboardScreen";
+import ParentAttendanceScreen from "@modules/attendance/screens/ParentAttendanceScreen";
+import BusPassScreen from "@modules/attendance/screens/BusPassScreen";
 import ParentPaymentsScreen from "@modules/payment/screens/ParentPaymentsScreen";
 
 // Phase 2
@@ -306,6 +310,20 @@ const PARENT: NavItem[] = [
     component: StudentsNavigator,
     primary: true,
     tint: "green",
+  },
+  {
+    name: "Attendance",
+    label: "Attendance",
+    icon: CalendarCheck,
+    component: ParentAttendanceScreen,
+    tint: "violet",
+  },
+  {
+    name: "BusPass",
+    label: "Bus Pass",
+    icon: QrCode,
+    component: BusPassScreen,
+    tint: "blue",
   },
   {
     name: "Payments",

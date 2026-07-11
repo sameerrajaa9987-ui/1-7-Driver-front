@@ -18,6 +18,13 @@ export const useAttendanceList = (params?: {
     queryFn: () => attendanceApi.list(params),
   });
 
+export const useStudentQr = (studentId?: string) =>
+  useQuery({
+    queryKey: ["student-qr", studentId],
+    queryFn: () => attendanceApi.qrToken(studentId as string),
+    enabled: !!studentId,
+  });
+
 export const useScanAttendance = () => {
   const qc = useQueryClient();
   return useMutation({
