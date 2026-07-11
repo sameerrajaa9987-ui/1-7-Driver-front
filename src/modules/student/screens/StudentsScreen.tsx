@@ -92,6 +92,70 @@ export default function StudentsScreen() {
     return map;
   }, [activeTrips.data]);
 
+  // Drivers get a "My Students" roster — illustrated avatar, class/pickup and a
+  // live On-Board / Waiting / Absent pill from their in-progress trip, plus a
+  // one-tap call to the parent. (Not the admin approve-and-assign roster.)
+  if (role === "driver") {
+    const q = search.trim().toLowerCase();
+    const roster = q
+      ? students.filter(
+          (s) =>
+            s.name.toLowerCase().includes(q) ||
+            (s.mobile ?? "").includes(q) ||
+            (s.className ?? "").toLowerCase().includes(q),
+        )
+      : students;
+    const onBoard = students.filter(
+      (s) => liveByStudent[s.id]?.label === "On Board",
+    ).length;
+    return (
+      <Screen
+        title="My Students"
+        refreshing={isRefetching || isLoading}
+        onRefresh={refetch}
+      >
+        {/* Count strip */}
+        <HStack gap={12}>
+          <CountTile label="Total" value={students.length} tint="violet" />
+          <CountTile label="On Board" value={onBoard} tint="green" />
+        </HStack>
+
+        <View style={[styles.searchWrap, { marginTop: 16 }]}>
+          <Search size={18} color={palette.text.tertiary} strokeWidth={1.8} />
+          <TextInput
+            placeholder="Search by name, class or mobile"
+            placeholderTextColor={palette.text.tertiary}
+            value={search}
+            onChangeText={setSearch}
+            style={styles.searchInput}
+            autoCapitalize="none"
+          />
+        </View>
+
+        {roster.length === 0 ? (
+          <EmptyState
+            icon={GraduationCap}
+            title={isLoading ? "Loading…" : "No students on your route"}
+            message="Students assigned to your route will appear here."
+          />
+        ) : (
+          <VStack gap={12} style={{ marginTop: 16 }}>
+            {roster.map((s) => (
+              <DriverStudentRow
+                key={s.id}
+                student={s}
+                live={liveByStudent[s.id]}
+                onPress={() =>
+                  navigation.navigate("StudentDetail", { id: s.id })
+                }
+              />
+            ))}
+          </VStack>
+        )}
+      </Screen>
+    );
+  }
+
   // Parents get the client-kit "My Children" view — one rich card per child
   // (photo, route/driver/vehicle, Call Driver) instead of an admin roster.
   if (role === "parent") {
@@ -240,6 +304,90 @@ function StudentRow({
   );
 }
 
+/** Driver "My Students" row — illustrated avatar, class/pickup, live pill, call. */
+function DriverStudentRow({
+  student,
+  live,
+  onPress,
+}: {
+  student: Student;
+  live?: LiveStatus;
+  onPress: () => void;
+}) {
+  const sub = [
+    student.className && `Class ${student.className}`,
+    student.routeName,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return (
+    <Card onPress={onPress} elevation="base">
+      <HStack gap={14} align="center">
+        <Avatar
+          name={student.name}
+          size={48}
+          photo={student.photo ? mediaUrl(student.photo) : undefined}
+          svgXml={student.photo ? undefined : childAvatarSvg(student.id)}
+          seed={student.id}
+        />
+        <VStack gap={4} flex={1}>
+          <Text variant="label-lg" tone="primary" numberOfLines={1}>
+            {student.name}
+          </Text>
+          {sub ? (
+            <Text variant="body-sm" tone="tertiary" numberOfLines={1}>
+              {sub}
+            </Text>
+          ) : null}
+          {live ? (
+            <View style={{ alignSelf: "flex-start", marginTop: 2 }}>
+              <StatusChip label={live.label} tone={live.tone} />
+            </View>
+          ) : null}
+        </VStack>
+        {student.mobile ? (
+          <Pressable
+            onPress={() => Linking.openURL(`tel:${student.mobile}`)}
+            hitSlop={8}
+            style={styles.callIcon}
+          >
+            <Phone size={16} color={accent.main} strokeWidth={2.1} />
+          </Pressable>
+        ) : (
+          <ChevronRight
+            size={18}
+            color={palette.text.tertiary}
+            strokeWidth={2}
+          />
+        )}
+      </HStack>
+    </Card>
+  );
+}
+
+/** Small headline count tile for the driver roster. */
+function CountTile({
+  label,
+  value,
+  tint,
+}: {
+  label: string;
+  value: number;
+  tint: "violet" | "green";
+}) {
+  const c = tint === "violet" ? accent : { main: "#16A34A", soft: "#DCFCE7" };
+  return (
+    <View style={[styles.countTile, { backgroundColor: c.soft }]}>
+      <Text variant="h2" style={{ color: c.main }}>
+        {value}
+      </Text>
+      <Text variant="body-sm" tone="secondary">
+        {label}
+      </Text>
+    </View>
+  );
+}
+
 /** Client-kit child card — photo, class chip, transport rows, Call Driver. */
 function ChildCard({
   student,
@@ -384,5 +532,20 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: palette.text.primary,
     paddingVertical: 0,
+  },
+  callIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.full,
+    backgroundColor: accent.soft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  countTile: {
+    flex: 1,
+    borderRadius: radius.lg,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    gap: 2,
   },
 });

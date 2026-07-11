@@ -35,6 +35,17 @@ export default function ProfileScreen() {
 
   const roleLabel = ROLE_LABELS[user?.role ?? "parent"];
   const orgName = organization?.name || "your transport operator";
+  const isDriver = user?.role === "driver";
+
+  const notificationBody = isDriver
+    ? "You'll receive alerts for trip assignments, route changes, payment confirmations and emergency SOS. Manage system push permissions from your phone's Settings › Notifications."
+    : "You'll receive alerts for trip start, vehicle arriving, boarding, safe drop-off, fee reminders and emergencies. Manage system push permissions from your phone's Settings › Notifications.";
+  const privacyBody = isDriver
+    ? "We collect only what's needed to run your trips — profile, assigned route, live location while a trip is active, attendance and collections you record. Your location is shared only during active trips. We never sell your data."
+    : "We collect only what's needed to run your child's transport — profile, route, live location during active trips, attendance and fee records. Location is shared with you only while a trip is active. We never sell your data.";
+  const helpBody = isDriver
+    ? `Need help? Reach ${orgName} from the app, or contact your operator directly for route, student or payment questions. For app issues, our team will follow up.`
+    : `Need help? Reach ${orgName} through the Complaints tab, or call your child's driver from the Children screen. For app issues, raise a complaint and our team will follow up.`;
 
   const rows: { icon: LucideIcon; label: string; sheet: Sheet }[] = [
     {
@@ -60,7 +71,7 @@ export default function ProfileScreen() {
       label: "Notification Settings",
       sheet: {
         title: "Notification Settings",
-        body: "You'll receive alerts for trip start, vehicle arriving, boarding, safe drop-off, fee reminders and emergencies. Manage system push permissions from your phone's Settings › Notifications.",
+        body: notificationBody,
       },
     },
     {
@@ -68,7 +79,7 @@ export default function ProfileScreen() {
       label: "Privacy Policy",
       sheet: {
         title: "Privacy Policy",
-        body: "We collect only what's needed to run your child's transport — profile, route, live location during active trips, attendance and fee records. Location is shared with you only while a trip is active. We never sell your data.",
+        body: privacyBody,
       },
     },
     {
@@ -76,7 +87,7 @@ export default function ProfileScreen() {
       label: "Help & Support",
       sheet: {
         title: "Help & Support",
-        body: `Need help? Reach ${orgName} through the Complaints tab, or call your child's driver from the Children screen. For app issues, raise a complaint and our team will follow up.`,
+        body: helpBody,
       },
     },
     {
