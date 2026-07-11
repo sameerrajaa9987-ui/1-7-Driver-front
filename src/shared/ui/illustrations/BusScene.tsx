@@ -45,6 +45,21 @@ export function BusScene({ size = 150 }: { size?: number }) {
       {/* Scene disc */}
       <Ellipse cx="110" cy="84" rx="104" ry="74" fill="url(#sky)" />
 
+      {/* Soft city skyline peeking behind the bus */}
+      <G opacity={0.5}>
+        <Rect x="60" y="48" width="15" height="60" rx="3" fill="#CBD5FB" />
+        <Rect x="78" y="40" width="13" height="68" rx="3" fill="#DCE1FB" />
+        <Rect x="118" y="44" width="15" height="64" rx="3" fill="#CBD5FB" />
+        <Rect x="136" y="52" width="12" height="56" rx="3" fill="#DCE1FB" />
+        <Rect x="150" y="46" width="11" height="62" rx="3" fill="#CBD5FB" />
+        {/* tiny windows */}
+        <Rect x="64" y="54" width="3" height="3" rx="1" fill="#FFFFFF" />
+        <Rect x="70" y="54" width="3" height="3" rx="1" fill="#FFFFFF" />
+        <Rect x="82" y="48" width="3" height="3" rx="1" fill="#FFFFFF" />
+        <Rect x="122" y="50" width="3" height="3" rx="1" fill="#FFFFFF" />
+        <Rect x="128" y="50" width="3" height="3" rx="1" fill="#FFFFFF" />
+      </G>
+
       {/* Clouds */}
       <G opacity={0.9}>
         <Ellipse cx="46" cy="40" rx="15" ry="8" fill="#FFFFFF" />
@@ -107,7 +122,15 @@ export function BusScene({ size = 150 }: { size?: number }) {
       {/* Body */}
       <Rect x="40" y="58" width="132" height="58" rx="15" fill="url(#body)" />
       {/* Top highlight */}
-      <Rect x="46" y="61" width="120" height="9" rx="4.5" fill="#FFE199" opacity={0.7} />
+      <Rect
+        x="46"
+        y="61"
+        width="120"
+        height="9"
+        rx="4.5"
+        fill="#FFE199"
+        opacity={0.7}
+      />
       {/* Black school-bus stripe */}
       <Rect x="40" y="99" width="132" height="7" fill="#1F2937" opacity={0.9} />
       {/* Lower body shade */}
@@ -129,7 +152,14 @@ export function BusScene({ size = 150 }: { size?: number }) {
 
       {/* Door */}
       <Rect x="145" y="98" width="18" height="17" rx="3" fill="#9FC0EC" />
-      <Line x1="154" y1="98" x2="154" y2="115" stroke="#FFFFFF" strokeWidth="1.4" />
+      <Line
+        x1="154"
+        y1="98"
+        x2="154"
+        y2="115"
+        stroke="#FFFFFF"
+        strokeWidth="1.4"
+      />
 
       {/* Headlight + mirror + bumper */}
       <Circle cx="169" cy="105" r="3.4" fill="#FFF3C4" />

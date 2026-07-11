@@ -44,6 +44,7 @@ import {
   HStack,
   Card,
   Avatar,
+  childEmoji,
   BusScene,
   HeaderIconButton,
 } from "@shared/ui";
@@ -276,6 +277,7 @@ export default function ParentDashboardScreen() {
               seed={child.id}
               size={44}
               photo={child.photo ? mediaUrl(child.photo) : undefined}
+              fallbackEmoji={childEmoji(child.gender)}
             />
             <VStack gap={2} flex={1}>
               <Text variant="label-lg" tone="primary" numberOfLines={1}>
@@ -320,6 +322,7 @@ export default function ParentDashboardScreen() {
                       seed={c.id}
                       size={32}
                       photo={c.photo ? mediaUrl(c.photo) : undefined}
+                      fallbackEmoji={childEmoji(c.gender)}
                     />
                     <Text
                       variant="label"

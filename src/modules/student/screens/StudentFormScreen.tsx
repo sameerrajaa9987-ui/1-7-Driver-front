@@ -29,6 +29,7 @@ import {
   Button,
   TextField,
   Avatar,
+  childEmoji,
 } from "@shared/ui";
 
 export default function StudentFormScreen() {
@@ -185,6 +186,7 @@ export default function StudentFormScreen() {
                 name={f.name || "New Child"}
                 seed={id || "new-child"}
                 size={72}
+                fallbackEmoji={childEmoji(f.gender)}
               />
             )}
             <Pressable

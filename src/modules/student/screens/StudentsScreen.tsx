@@ -27,6 +27,7 @@ import {
   HStack,
   Card,
   Avatar,
+  childEmoji,
   Button,
   StatusChip,
   ChipsRow,
@@ -272,6 +273,7 @@ function ChildCard({
           name={student.name}
           size={52}
           photo={student.photo ? mediaUrl(student.photo) : undefined}
+          fallbackEmoji={childEmoji(student.gender)}
           seed={student.id}
         />
         <VStack gap={3} flex={1}>

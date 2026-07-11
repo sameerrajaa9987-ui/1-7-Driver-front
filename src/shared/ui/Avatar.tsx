@@ -8,12 +8,23 @@ interface Props {
   size?: number;
   /** Optional fixed tone; otherwise a deterministic colour from name/seed. */
   tone?: "teal" | "cobalt" | "slate";
-  /** Uploaded photo URL. When absent, clean initials on a tinted disc. */
+  /** Uploaded photo URL. When absent, initials (or `fallbackEmoji`) on a disc. */
   photo?: string | null;
+  /** Emoji shown instead of initials when there's no photo — e.g. a child face
+   *  (👦/👧/🧒). Warmer than initials for kids (emoji-style, per the client kit). */
+  fallbackEmoji?: string;
   /** Accepted for compatibility; no longer changes rendering. */
   placeholder?: boolean;
   /** Stable seed for the colour (e.g. a user/student id). Falls back to name. */
   seed?: string;
+}
+
+/** A boy/girl/child face for a student without a photo. */
+export function childEmoji(gender?: string) {
+  const g = (gender || "").trim().toLowerCase();
+  if (g.startsWith("m") || g === "boy") return "👦";
+  if (g.startsWith("f") || g === "girl") return "👧";
+  return "🧒";
 }
 
 const FIXED = {
@@ -51,7 +62,14 @@ export function placeholderPortrait() {
   return "";
 }
 
-export function Avatar({ name, size = 40, tone, photo, seed }: Props) {
+export function Avatar({
+  name,
+  size = 40,
+  tone,
+  photo,
+  fallbackEmoji,
+  seed,
+}: Props) {
   if (photo) {
     return (
       <Image
@@ -75,13 +93,19 @@ export function Avatar({ name, size = 40, tone, photo, seed }: Props) {
           width: size,
           height: size,
           borderRadius: radius.full,
-          backgroundColor: c.bg,
+          backgroundColor: fallbackEmoji ? "#EEF2FF" : c.bg,
         },
       ]}
     >
-      <Text weight="700" style={{ color: c.fg, fontSize: size * 0.4 }}>
-        {initials(name)}
-      </Text>
+      {fallbackEmoji ? (
+        <Text style={{ fontSize: size * 0.56, lineHeight: size * 0.72 }}>
+          {fallbackEmoji}
+        </Text>
+      ) : (
+        <Text weight="700" style={{ color: c.fg, fontSize: size * 0.4 }}>
+          {initials(name)}
+        </Text>
+      )}
     </View>
   );
 }
