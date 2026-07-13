@@ -86,7 +86,11 @@ export default function OnboardingScreen() {
   const [index, setIndex] = useState(0);
   const complete = useOnboardingStore((s) => s.complete);
 
-  const artSize = Math.min(width * 0.72, height * 0.34);
+  // The art is ~1.46:1 — size by width and derive height so `contain` never
+  // letterboxes it smaller. Slide 1 runs near full-bleed like the mockup.
+  const ASPECT = 1.46;
+  const artW = Math.min(width - 40, (height * 0.36) * ASPECT);
+  const welcomeArtW = Math.min(width - 16, (height * 0.4) * ASPECT);
 
   const finish = () => {
     complete();
@@ -138,7 +142,13 @@ export default function OnboardingScreen() {
             <View
               style={[
                 styles.slide,
-                { width, paddingBottom: insets.bottom + 150 },
+                {
+                  width,
+                  // Explicit height — flex:1 doesn't stretch inside a
+                  // horizontal FlatList cell, which pins content to the top.
+                  height: height - insets.top,
+                  paddingBottom: insets.bottom + (welcome ? 170 : 140),
+                },
               ]}
             >
               {welcome ? (
@@ -171,47 +181,49 @@ export default function OnboardingScreen() {
                 </View>
               ) : null}
 
-              {/* Illustration */}
+              {/* Art + copy travel as one centred group — no dead void
+                  between the body text and the footer. */}
               <View style={styles.artWrap}>
                 <Image
                   source={item.image}
-                  style={{ width: artSize, height: artSize }}
+                  style={{
+                    width: welcome ? welcomeArtW : artW,
+                    height: (welcome ? welcomeArtW : artW) / ASPECT,
+                  }}
                   resizeMode="contain"
                 />
-              </View>
 
-              {!welcome ? (
-                /* Slides 2–4 — icon tile, centred title + body. */
-                <View style={styles.centerBlock}>
-                  {Icon ? (
-                    <View style={styles.iconTile}>
-                      <Icon size={26} color={accent.main} strokeWidth={2.2} />
-                    </View>
-                  ) : null}
-                  <Text
-                    variant="h3"
-                    weight="700"
-                    tone="primary"
-                    style={{ textAlign: "center", marginTop: 18 }}
-                  >
-                    {item.title}
-                  </Text>
-                  <Text
-                    variant="body-lg"
-                    tone="secondary"
-                    style={{
-                      textAlign: "center",
-                      marginTop: 12,
-                      lineHeight: 24,
-                      maxWidth: 320,
-                    }}
-                  >
-                    {item.body}
-                  </Text>
-                </View>
-              ) : (
-                <View style={{ flex: 1 }} />
-              )}
+                {!welcome ? (
+                  /* Slides 2–4 — icon tile, centred title + body. */
+                  <View style={styles.centerBlock}>
+                    {Icon ? (
+                      <View style={styles.iconTile}>
+                        <Icon size={26} color={accent.main} strokeWidth={2.2} />
+                      </View>
+                    ) : null}
+                    <Text
+                      variant="h3"
+                      weight="700"
+                      tone="primary"
+                      style={{ textAlign: "center", marginTop: 18 }}
+                    >
+                      {item.title}
+                    </Text>
+                    <Text
+                      variant="body-lg"
+                      tone="secondary"
+                      style={{
+                        textAlign: "center",
+                        marginTop: 12,
+                        lineHeight: 24,
+                        maxWidth: 320,
+                      }}
+                    >
+                      {item.body}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
             </View>
           );
         }}
@@ -274,7 +286,6 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#FFFFFF" },
   slide: {
-    flex: 1,
     paddingHorizontal: 28,
     alignItems: "center",
   },
@@ -298,6 +309,7 @@ const styles = StyleSheet.create({
   centerBlock: {
     alignItems: "center",
     width: "100%",
+    marginTop: 28,
   },
   iconTile: {
     width: 56,
