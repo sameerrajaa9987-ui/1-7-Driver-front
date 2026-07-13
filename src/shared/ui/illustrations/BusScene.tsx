@@ -1,38 +1,28 @@
 /**
- * BusScene — a beautiful flat school-bus illustration. The bus is Microsoft's
- * MIT-licensed Fluent Emoji "bus", recoloured to school-bus amber, inlined and
- * rendered via `SvgXml`. It sits on a soft indigo disc so it reads well on
- * light cards and on the indigo hero banner.
+ * BusScene — the client's 3D school-bus illustration (background removed,
+ * cropped to content). Rendered as a plain transparent Image so it floats on
+ * any surface — lavender hero headers, indigo gradients, empty states.
+ * `size` is the rendered width; height follows the art's 1.6:1 aspect.
  */
 import React from "react";
-import { View, StyleSheet } from "react-native";
-import { SvgXml } from "react-native-svg";
+import { Image, type StyleProp, type ImageStyle } from "react-native";
 
-// Fluent Emoji "bus" (MIT), body recoloured #E6E6E6 → school-bus amber.
-const BUS = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><g fill="none"><path fill="#FDB022" d="M30 9.94V20l-14 2l-14-2V9.94C2 8.87 2.87 8 3.94 8h24.12C29.14 8 30 8.87 30 9.94"/><path fill="#7CC8F5" d="M6 18.14v-7.28c0-.47-.42-.86-.93-.86H2v9h3.07c.51 0 .93-.39.93-.86M8.93 10h4.15c.51 0 .92.39.93.86v7.27c0 .47-.42.86-.93.86H8.93c-.51 0-.93-.38-.93-.86v-7.27c0-.47.42-.86.93-.86m11.15 0h-4.15c-.51 0-.93.39-.93.86v7.27c0 .48.42.86.93.86h4.15c.51 0 .93-.39.93-.86v-7.27c-.01-.47-.42-.86-.93-.86m2.85 0h4.15c.51 0 .92.39.93.86v7.27c0 .47-.42.86-.93.86h-4.15c-.51 0-.93-.38-.93-.86v-7.27c0-.47.42-.86.93-.86"/><path fill="#F79009" d="M30 20v5.06c0 1.07-.87 1.94-1.94 1.94H3.94C2.87 27 2 26.13 2 25.06V20z"/><path fill="#212121" d="M2 10h3.07c.51 0 .93.39.93.86V12H2zm4.52 7h-.39C5.51 17 5 16.5 5 15.87v-1.74c0-.62.51-1.13 1.13-1.13h.39c.26 0 .48.21.48.48v3.04c0 .26-.21.48-.48.48m5.51 9.5a3.5 3.5 0 1 1-7 0a3.5 3.5 0 0 1 7 0M23.51 30a3.5 3.5 0 1 0 0-7a3.5 3.5 0 0 0 0 7"/><path fill="#F92F60" d="M30 21h-.5c-.85 0-1.54.71-1.5 1.57c.04.81.74 1.43 1.55 1.43H30z"/><path fill="#FFF478" d="M2.91 25H2v-4h.91c.6 0 1.09.49 1.09 1.09v1.82c0 .6-.48 1.09-1.09 1.09"/><path fill="#D3D3D3" d="M10 26.5a1.5 1.5 0 1 1-3 0a1.5 1.5 0 0 1 3 0m15 0a1.5 1.5 0 1 1-3 0a1.5 1.5 0 0 1 3 0"/></g></svg>`;
+const ART = require("../../../../assets/illustrations/bus-illustration.png");
+/** Source art is 587×366. */
+const ASPECT = 587 / 366;
 
-export function BusScene({ size = 150 }: { size?: number }) {
-  const disc = size * 0.92;
-  const bus = size * 0.66;
+export function BusScene({
+  size = 150,
+  style,
+}: {
+  size?: number;
+  style?: StyleProp<ImageStyle>;
+}) {
   return (
-    <View style={[styles.wrap, { width: size, height: size * 0.82 }]}>
-      <View
-        style={[
-          styles.disc,
-          { width: disc, height: disc, borderRadius: disc / 2 },
-        ]}
-      />
-      {/* zIndex keeps the art above the absolute disc on react-native-web,
-          where a positioned sibling otherwise paints over static children. */}
-      <View style={styles.art}>
-        <SvgXml xml={BUS} width={bus} height={bus} />
-      </View>
-    </View>
+    <Image
+      source={ART}
+      style={[{ width: size, height: size / ASPECT }, style]}
+      resizeMode="contain"
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: { alignItems: "center", justifyContent: "center" },
-  disc: { position: "absolute", backgroundColor: "#EEF2FF", zIndex: 0 },
-  art: { zIndex: 1 },
-});

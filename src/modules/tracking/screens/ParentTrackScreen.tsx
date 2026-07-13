@@ -274,7 +274,7 @@ function TrackContent({
               </Text>
             </View>
           </VStack>
-          <BusScene size={100} />
+          <BusScene size={128} />
         </LinearGradient>
       </View>
 

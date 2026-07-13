@@ -360,7 +360,7 @@ export default function ParentDashboardScreen() {
                     : "Waiting for the vehicle…")}
               </Text>
             </VStack>
-            <BusScene size={96} />
+            <BusScene size={124} />
           </View>
 
           {/* Route / driver / vehicle + journey timeline */}
@@ -602,7 +602,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: accent.soft,
     paddingHorizontal: 18,
-    paddingTop: 16,
+    paddingVertical: 14,
   },
   liveBody: { padding: 16 },
   vehicleChipLight: {

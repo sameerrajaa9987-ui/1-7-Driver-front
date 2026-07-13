@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { Bus, Navigation } from "lucide-react-native";
 import { onSocket } from "@shared/api/socket";
+import { trackingApi } from "@modules/tracking/api/trackingApi";
 import LiveMap from "@shared/ui/MapView";
 import type { MapMarker } from "@shared/ui/map.types";
 import { palette, radius, tints } from "@shared/designSystem";
@@ -57,6 +58,31 @@ export default function TrackingScreen() {
     return unsub;
   }, []);
 
+  // Seed last-known positions over REST — a bus that pushed GPS before this
+  // screen mounted would otherwise sit on "Awaiting GPS" until its next frame.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const missing = trips.filter((t) => !positions[t.id]);
+      const frames = await Promise.all(
+        missing.map((t) => trackingApi.getForTrip(t.id).catch(() => null)),
+      );
+      if (cancelled) return;
+      setPositions((cur) => {
+        const next = { ...cur };
+        frames.forEach((f) => {
+          // Socket frames arriving meanwhile stay authoritative.
+          if (f?.tripId && !next[f.tripId]) next[f.tripId] = f as VehicleFrame;
+        });
+        return next;
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trips]);
+
   // Drop stale positions for trips that are no longer active.
   useEffect(() => {
     const activeIds = new Set(trips.map((t) => t.id));
@@ -69,16 +95,20 @@ export default function TrackingScreen() {
     });
   }, [trips]);
 
+  // Label each vehicle with its route so tapping a marker identifies it.
   const markers: MapMarker[] = useMemo(
     () =>
-      Object.values(positions).map((p) => ({
-        id: p.tripId,
-        lat: p.lat,
-        lng: p.lng,
-        label: "Vehicle",
-        kind: "vehicle" as const,
-      })),
-    [positions],
+      Object.values(positions).map((p) => {
+        const trip = trips.find((t) => t.id === p.tripId);
+        return {
+          id: p.tripId,
+          lat: p.lat,
+          lng: p.lng,
+          label: trip?.routeName || "Vehicle",
+          kind: "vehicle" as const,
+        };
+      }),
+    [positions, trips],
   );
 
   const center = markers.length
@@ -95,7 +125,20 @@ export default function TrackingScreen() {
       onRefresh={refetch}
     >
       <View style={styles.mapWrap}>
-        <LiveMap markers={markers} center={center} height={300} />
+        <LiveMap
+          markers={markers}
+          center={center}
+          height={340}
+          overlay={
+            trips.length
+              ? {
+                  title: "Live Fleet",
+                  subtitle: `${onTheWay} vehicle${onTheWay === 1 ? "" : "s"} on the way`,
+                  caption: awaiting ? `${awaiting} awaiting GPS` : undefined,
+                }
+              : undefined
+          }
+        />
       </View>
 
       {/* Legend */}
@@ -182,13 +225,19 @@ function ActiveTripRow({ trip, frame }: { trip: Trip; frame?: VehicleFrame }) {
           <Navigation size={18} color={palette.cobalt[600]} strokeWidth={2} />
         </View>
         <VStack gap={4} flex={1}>
-          <Text variant="label-lg" tone="primary">
-            {TRIP_TYPE_LABEL[trip.type]} trip
+          <Text variant="label-lg" tone="primary" numberOfLines={1}>
+            {trip.routeName || `${TRIP_TYPE_LABEL[trip.type]} trip`}
           </Text>
-          <Text variant="body-sm" tone="tertiary">
-            {reporting
-              ? `${Math.round(frame!.speed)} km/h · updated live`
-              : "Awaiting GPS…"}
+          <Text variant="body-sm" tone="tertiary" numberOfLines={1}>
+            {[
+              trip.driverName,
+              TRIP_TYPE_LABEL[trip.type],
+              reporting
+                ? `${Math.round(frame!.speed)} km/h · live`
+                : "Awaiting GPS…",
+            ]
+              .filter(Boolean)
+              .join(" · ")}
           </Text>
         </VStack>
         <StatusChip

@@ -89,8 +89,8 @@ export default function OnboardingScreen() {
   // The art is ~1.46:1 — size by width and derive height so `contain` never
   // letterboxes it smaller. Slide 1 runs near full-bleed like the mockup.
   const ASPECT = 1.46;
-  const artW = Math.min(width - 40, (height * 0.36) * ASPECT);
-  const welcomeArtW = Math.min(width - 16, (height * 0.4) * ASPECT);
+  const artW = Math.min(width - 40, height * 0.36 * ASPECT);
+  const welcomeArtW = Math.min(width - 16, height * 0.4 * ASPECT);
 
   const finish = () => {
     complete();
